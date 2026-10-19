@@ -1,0 +1,306 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String    @unique
+  fullName     String
+  passwordHash String
+  collegeId    String?
+  collegeName  String?
+  department   String?
+  yearOfStudy  String?
+  bio          String?   @db.Text
+  avatarUrl    String?
+  role         String    @default("STUDENT") // STUDENT, FACULTY, ADMIN
+  isVerified   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  college      College?  @relation(fields: [collegeId], references: [id], onDelete: SetNull)
+
+  // Social & Posts
+  posts        Post[]
+  likes        Like[]
+  comments     Comment[]
+  savedPosts   SavedPost[]
+  stories      Story[]
+
+  // Academic Resources (Teacher uploads)
+  uploadedResources AcademicResource[]
+
+  // Follow graph
+  followers    Follow[]  @relation("UserFollowers")
+  following    Follow[]  @relation("UserFollowing")
+
+  // Messaging & Communities
+  conversations         ConversationMember[]
+  messagesSent          Message[]
+  createdCommunities    Community[]          @relation("CommunityCreator")
+  communityMemberships  CommunityMember[]
+  channelMessages       ChannelMessage[]
+
+  // Notifications
+  notificationsReceived Notification[]       @relation("UserNotificationsReceived")
+  notificationsSent     Notification[]       @relation("UserNotificationsSent")
+
+  @@index([email])
+  @@index([username])
+  @@index([role])
+}
+
+model College {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  domain    String?  @unique
+  location  String?
+  createdAt DateTime @default(now())
+
+  users     User[]
+}
+
+model Post {
+  id        String      @id @default(uuid())
+  userId    String
+  caption   String?     @db.Text
+  location  String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media     PostMedia[]
+  likes     Like[]
+  comments  Comment[]
+  savedBy   SavedPost[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model PostMedia {
+  id        String   @id @default(uuid())
+  postId    String
+  mediaUrl  String
+  mediaType String   @default("IMAGE") // IMAGE, VIDEO
+  position  Int      @default(0)
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model SavedPost {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId])
+}
+
+model Story {
+  id        String   @id @default(uuid())
+  userId    String
+  mediaUrl  String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Conversation {
+  id        String               @id @default(uuid())
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  members   ConversationMember[]
+  messages  Message[]
+}
+
+model ConversationMember {
+  id             String       @id @default(uuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String       @db.Text
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model Community {
+  id          String            @id @default(uuid())
+  name        String            @unique
+  description String?           @db.Text
+  avatarUrl   String?
+  createdById String
+  createdAt   DateTime          @default(now())
+
+  creator     User              @relation("CommunityCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  members     CommunityMember[]
+  channels    Channel[]
+}
+
+model CommunityMember {
+  id          String    @id @default(uuid())
+  communityId String
+  userId      String
+  role        String    @default("MEMBER") // OWNER, ADMIN, MODERATOR, MEMBER
+  joinedAt    DateTime  @default(now())
+
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+}
+
+model Channel {
+  id          String           @id @default(uuid())
+  communityId String
+  name        String
+  description String?
+  createdAt   DateTime         @default(now())
+
+  community   Community        @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  messages    ChannelMessage[]
+
+  @@unique([communityId, name])
+  @@index([communityId])
+}
+
+model ChannelMessage {
+  id        String   @id @default(uuid())
+  channelId String
+  senderId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([channelId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  recipientId String
+  actorId     String?
+  type        String   // LIKE, COMMENT, FOLLOW, MESSAGE, ANNOUNCEMENT
+  title       String?
+  message     String
+  entityId    String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  recipient   User     @relation("UserNotificationsReceived", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor       User?    @relation("UserNotificationsSent", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId])
+  @@index([isRead])
+}
+
+model Subject {
+  id          String             @id @default(uuid())
+  code        String             @unique // e.g. 21CS32
+  name        String             // e.g. Data Structures & Algorithms
+  department  String
+  semester    String             // e.g. 3rd Sem
+  resources   AcademicResource[]
+  createdAt   DateTime           @default(now())
+
+  @@index([code])
+}
+
+model AcademicResource {
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  category    String   // NOTES, QUESTION_PAPER, LAB_MANUAL, SYLLABUS
+  fileUrl     String
+  fileFormat  String   @default("PDF")
+  fileSize    String?
+  subjectId   String
+  uploaderId  String
+  downloads   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  uploader    User     @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  @@index([subjectId])
+  @@index([uploaderId])
+  @@index([category])
+}
