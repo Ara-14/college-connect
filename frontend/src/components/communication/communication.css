@@ -1,6 +1,6 @@
 /* ================================================================= */
 /* COLLEGE CONNECT - COMMUNICATION MODULE STYLES                     */
-/* Inspired by Microsoft Teams & WhatsApp with Purple Night Aesthetic */
+/* Inspired by Microsoft Teams & WhatsApp with Green Campus Aesthetic */
 /* ================================================================= */
 
 .cc-comm-dashboard {
@@ -13,18 +13,18 @@
 }
 
 .communication-page .cc-comm-dashboard {
-  border: 1px solid rgba(196, 181, 253, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 24px;
   background:
-    radial-gradient(ellipse at 92% 0%, rgba(196, 181, 253, 0.08), transparent 38%),
-    #100f19;
-  box-shadow: 0 18px 50px rgba(5, 4, 12, 0.2);
+    radial-gradient(ellipse at 92% 0%, rgba(255, 255, 255, 0.06), transparent 38%),
+    #171c18;
+  box-shadow: 0 18px 50px rgba(5, 18, 10, 0.2);
 }
 
 /* 1. Sub-navigation Bar */
 .cc-comm-subnav {
   width: 64px;
-  background: #100f1a;
+  background: #191f1a;
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
@@ -55,9 +55,9 @@
 }
 
 .cc-subnav-item.active {
-  background: rgba(124, 58, 237, 0.15);
-  color: #c4b5fd;
-  border-left: 3px solid var(--accent-purple);
+  background: rgba(24, 164, 91, 0.15);
+  color: #b4c1b7;
+  border-left: 3px solid var(--accent-green);
 }
 
 .cc-subnav-icon-wrap {
@@ -77,7 +77,7 @@
   font-weight: 700;
   padding: 1px 5px;
   border-radius: 10px;
-  border: 2px solid #100f1a;
+  border: 2px solid #191f1a;
 }
 
 /* 2. Communication Body Area */
@@ -101,9 +101,9 @@
 
 .cc-conv-col {
   width: 280px;
-  border: 1px solid rgba(196, 181, 253, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  background: rgba(24, 22, 36, 0.88);
+  background: rgba(32, 38, 34, 0.94);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -115,9 +115,9 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border: 1px solid rgba(196, 181, 253, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  background: rgba(20, 18, 31, 0.92);
+  background: rgba(25, 30, 26, 0.96);
   position: relative;
   overflow: hidden;
 }
@@ -159,7 +159,7 @@
 }
 
 .cc-btn-create-chat {
-  background: var(--accent-purple);
+  background: var(--accent-green);
   color: white;
   width: 36px;
   height: 36px;
@@ -171,7 +171,7 @@
 }
 
 .cc-btn-create-chat:hover {
-  background: #6d28d9;
+  background: #137343;
   transform: scale(1.05);
 }
 
@@ -207,7 +207,7 @@
 }
 
 .cc-tab-pill.active {
-  background: var(--accent-purple);
+  background: var(--accent-green);
   color: white;
 }
 
@@ -228,12 +228,12 @@
 }
 
 .cc-conv-item:hover {
-  background: rgba(196, 181, 253, 0.07);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .cc-conv-item.selected {
-  background: linear-gradient(100deg, rgba(168, 139, 250, 0.16), rgba(244, 114, 182, 0.06));
-  box-shadow: inset 3px 0 #c4b5fd;
+  background: linear-gradient(100deg, rgba(24, 164, 91, 0.16), rgba(91, 173, 115, 0.06));
+  box-shadow: inset 3px 0 #b4c1b7;
 }
 
 .cc-conv-item.unread .cc-conv-title {
@@ -264,8 +264,8 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(124, 58, 237, 0.2);
-  color: #c4b5fd;
+  background: rgba(24, 164, 91, 0.2);
+  color: #b4c1b7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,7 +278,7 @@
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  border: 2px solid #141320;
+  border: 2px solid #1c211d;
 }
 
 .cc-status-dot.online {
@@ -353,7 +353,7 @@
 }
 
 .cc-unread-badge {
-  background: var(--accent-purple);
+  background: var(--accent-green);
   color: white;
   font-size: 11px;
   font-weight: 700;
@@ -371,9 +371,9 @@
 }
 
 .badge-faculty {
-  background: rgba(124, 58, 237, 0.25);
-  color: #c4b5fd;
-  border: 1px solid rgba(124, 58, 237, 0.4);
+  background: rgba(24, 164, 91, 0.25);
+  color: #b4c1b7;
+  border: 1px solid rgba(24, 164, 91, 0.4);
 }
 
 .badge-student {
@@ -416,8 +416,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(196, 181, 253, 0.1);
-  background: rgba(30, 27, 45, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(35, 41, 36, 0.78);
 }
 
 .cc-chat-header-info {
@@ -458,7 +458,7 @@
 }
 
 .cc-typing-text {
-  color: #a78bfa;
+  color: #64c77f;
   font-style: italic;
 }
 
@@ -495,7 +495,7 @@
 }
 
 .cc-icon-btn.active {
-  background: var(--accent-purple);
+  background: var(--accent-green);
   color: white;
 }
 
@@ -509,7 +509,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  background: #1a1929;
+  background: #202622;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-muted);
 }
@@ -529,10 +529,10 @@
   align-items: center;
   gap: 10px;
   padding: 8px 20px;
-  background: rgba(124, 58, 237, 0.12);
-  border-bottom: 1px solid rgba(124, 58, 237, 0.25);
+  background: rgba(24, 164, 91, 0.12);
+  border-bottom: 1px solid rgba(24, 164, 91, 0.25);
   font-size: 12px;
-  color: #ddd6fe;
+  color: #d8f2df;
 }
 
 .cc-pinned-text {
@@ -551,8 +551,8 @@
   flex-direction: column;
   gap: 18px;
   background:
-    radial-gradient(circle at 12% 10%, rgba(196, 181, 253, 0.06), transparent 28%),
-    radial-gradient(circle at 90% 85%, rgba(244, 114, 182, 0.035), transparent 26%);
+    radial-gradient(circle at 12% 10%, rgba(255, 255, 255, 0.04), transparent 28%),
+    radial-gradient(circle at 90% 85%, rgba(91, 173, 115, 0.035), transparent 26%);
 }
 
 .cc-message-row {
@@ -605,7 +605,7 @@
 .cc-msg-sender-name {
   font-size: 12px;
   font-weight: 600;
-  color: #c4b5fd;
+  color: #b4c1b7;
 }
 
 .cc-query-tag {
@@ -628,7 +628,7 @@
   gap: 6px;
   padding: 4px 10px;
   background: rgba(0, 0, 0, 0.3);
-  border-left: 3px solid var(--accent-purple);
+  border-left: 3px solid var(--accent-green);
   border-radius: 4px 8px 0 0;
   font-size: 11.5px;
   color: var(--text-muted);
@@ -655,15 +655,15 @@
 }
 
 .bubble-me {
-  background: linear-gradient(135deg, #8b70e8 0%, #775bd2 100%);
+  background: linear-gradient(135deg, #22a45a 0%, #147745 100%);
   color: #ffffff;
   border-bottom-right-radius: 7px;
 }
 
 .bubble-other {
-  background: #242134;
+  background: #2e3630;
   color: var(--text-main);
-  border: 1px solid rgba(196, 181, 253, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom-left-radius: 7px;
 }
 
@@ -734,7 +734,7 @@
 }
 
 .cc-btn-download:hover {
-  background: var(--accent-purple);
+  background: var(--accent-green);
 }
 
 /* Action Toolbar on Hover */
@@ -742,7 +742,7 @@
   position: absolute;
   top: -12px;
   right: 6px;
-  background: #252438;
+  background: #303a33;
   border: 1px solid var(--border-subtle);
   border-radius: 20px;
   padding: 2px 6px;
@@ -773,8 +773,8 @@
 /* 6. Composer Area */
 .cc-composer-area {
   padding: 14px 22px 18px;
-  background: rgba(30, 27, 45, 0.72);
-  border-top: 1px solid rgba(196, 181, 253, 0.1);
+  background: rgba(35, 41, 36, 0.78);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -784,8 +784,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(124, 58, 237, 0.15);
-  border-left: 3px solid var(--accent-purple);
+  background: rgba(24, 164, 91, 0.15);
+  border-left: 3px solid var(--accent-green);
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
@@ -857,16 +857,16 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #211e31;
-  border: 1px solid rgba(196, 181, 253, 0.16);
+  background: #29332c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
   padding: 8px 12px;
   transition: border-color 0.18s, box-shadow 0.18s;
 }
 
 .cc-composer-form:focus-within {
-  border-color: rgba(196, 181, 253, 0.55);
-  box-shadow: 0 0 0 4px rgba(168, 139, 250, 0.09);
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 0 0 4px rgba(24, 164, 91, 0.09);
 }
 
 .cc-composer-btn {
@@ -884,7 +884,7 @@
 }
 
 .cc-composer-btn.active {
-  color: var(--accent-purple);
+  color: var(--accent-green);
 }
 
 .cc-composer-input {
@@ -905,7 +905,7 @@
 }
 
 .cc-send-btn {
-  background: linear-gradient(135deg, #a78bfa, #c084fc);
+  background: linear-gradient(135deg, #64c77f, #62c77f);
   color: white;
   width: 40px;
   height: 40px;
@@ -917,7 +917,7 @@
 }
 
 .cc-send-btn:hover:not(:disabled) {
-  background: #6d28d9;
+  background: #137343;
   transform: scale(1.05);
 }
 
@@ -981,7 +981,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #141320;
+  background: #1c211d;
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 8px 14px;
@@ -999,7 +999,7 @@
 }
 
 .cc-dept-select {
-  background: #141320;
+  background: #1c211d;
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 8px 12px;
@@ -1017,7 +1017,7 @@
 
 .cc-faculty-card,
 .cc-student-card {
-  background: #141320;
+  background: #1c211d;
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 18px;
@@ -1030,7 +1030,7 @@
 .cc-faculty-card:hover,
 .cc-student-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(124, 58, 237, 0.4);
+  border-color: rgba(24, 164, 91, 0.4);
 }
 
 .cc-faculty-top,
@@ -1064,7 +1064,7 @@
 .cc-dept-badge {
   display: inline-block;
   font-size: 11px;
-  color: #a78bfa;
+  color: #64c77f;
   margin-top: 2px;
 }
 
@@ -1089,8 +1089,8 @@
 }
 
 .cc-roll-tag {
-  color: #c4b5fd;
-  background: rgba(124, 58, 237, 0.15);
+  color: #b4c1b7;
+  background: rgba(24, 164, 91, 0.15);
 }
 
 .cc-faculty-bio,
@@ -1128,7 +1128,7 @@
 }
 
 .cc-announcement-card {
-  background: #141320;
+  background: #1c211d;
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 20px;
@@ -1169,12 +1169,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(124, 58, 237, 0.15);
-  border-left: 3px solid var(--accent-purple);
+  background: rgba(24, 164, 91, 0.15);
+  border-left: 3px solid var(--accent-green);
   padding: 8px 14px;
   border-radius: 6px;
   font-size: 12.5px;
-  color: #ddd6fe;
+  color: #d8f2df;
 }
 
 .cc-ann-latest-message {
@@ -1189,7 +1189,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #a78bfa;
+  color: #64c77f;
   margin-bottom: 6px;
 }
 
@@ -1210,8 +1210,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(124, 58, 237, 0.2);
-  color: #ddd6fe;
+  background: rgba(24, 164, 91, 0.2);
+  color: #d8f2df;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
@@ -1220,7 +1220,7 @@
 }
 
 .cc-ann-attachment-pill:hover {
-  background: var(--accent-purple);
+  background: var(--accent-green);
   color: white;
 }
 
@@ -1230,7 +1230,7 @@
 }
 
 .cc-settings-card {
-  background: #141320;
+  background: #1c211d;
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 24px;
@@ -1287,8 +1287,8 @@
 }
 
 .cc-status-option.selected {
-  border-color: var(--accent-purple);
-  background: rgba(124, 58, 237, 0.12);
+  border-color: var(--accent-green);
+  background: rgba(24, 164, 91, 0.12);
 }
 
 .cc-toggle-box {
@@ -1353,7 +1353,7 @@
 }
 
 input:checked + .cc-slider {
-  background-color: var(--accent-purple);
+  background-color: var(--accent-green);
 }
 
 input:checked + .cc-slider:before {
@@ -1374,7 +1374,7 @@ input:checked + .cc-slider:before {
 }
 
 .cc-modal-card {
-  background: #171624;
+  background: #202622;
   border: 1px solid var(--border-light);
   border-radius: 16px;
   width: 100%;
@@ -1460,7 +1460,7 @@ input:checked + .cc-slider:before {
 }
 
 .cc-input:focus {
-  border-color: var(--accent-purple);
+  border-color: var(--accent-green);
 }
 
 .cc-type-selector {
@@ -1485,9 +1485,9 @@ input:checked + .cc-slider:before {
 }
 
 .cc-type-chip.active {
-  background: rgba(124, 58, 237, 0.15);
-  border-color: var(--accent-purple);
-  color: #c4b5fd;
+  background: rgba(24, 164, 91, 0.15);
+  border-color: var(--accent-green);
+  color: #b4c1b7;
 }
 
 .cc-type-chip.disabled {
@@ -1518,7 +1518,7 @@ input:checked + .cc-slider:before {
 }
 
 .cc-member-select-item.selected {
-  background: rgba(124, 58, 237, 0.12);
+  background: rgba(24, 164, 91, 0.12);
 }
 
 .cc-member-info {
@@ -1544,8 +1544,8 @@ input:checked + .cc-slider:before {
 }
 
 .cc-checkbox.checked {
-  background: var(--accent-purple);
-  border-color: var(--accent-purple);
+  background: var(--accent-green);
+  border-color: var(--accent-green);
 }
 
 .cc-modal-actions {
@@ -1570,12 +1570,12 @@ input:checked + .cc-slider:before {
 }
 
 .cc-btn-primary {
-  background: var(--accent-purple);
+  background: var(--accent-green);
   color: white;
 }
 
 .cc-btn-primary:hover:not(:disabled) {
-  background: #6d28d9;
+  background: #137343;
 }
 
 .cc-btn-secondary {
@@ -1615,7 +1615,7 @@ input:checked + .cc-slider:before {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #a78bfa;
+  color: #64c77f;
   font-size: 12px;
   font-weight: 600;
 }
@@ -1657,8 +1657,8 @@ input:checked + .cc-slider:before {
 .cc-spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid rgba(124, 58, 237, 0.2);
-  border-top-color: var(--accent-purple);
+  border: 3px solid rgba(24, 164, 91, 0.2);
+  border-top-color: var(--accent-green);
   border-radius: 50%;
   animation: ccSpin 0.7s linear infinite;
 }
@@ -1776,7 +1776,7 @@ input:checked + .cc-slider:before {
   position: absolute;
   top: 100%;
   right: 0;
-  background: #1e1d2c;
+  background: #252c27;
   border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 4px;
@@ -1836,7 +1836,7 @@ input:checked + .cc-slider:before {
 .cc-mobile-back-bar {
   display: none;
   padding: 10px 16px;
-  background: #141320;
+  background: #1c211d;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -1892,3 +1892,194 @@ input:checked + .cc-slider:before {
     padding: 16px;
   }
 }
+
+.app-layout .communication-page .cc-comm-dashboard {
+  border-color: #e1e9e2;
+  background: #f4f8f4;
+  box-shadow: 0 14px 38px rgba(34, 68, 43, 0.07);
+}
+
+.app-layout .communication-page .cc-comm-subnav,
+.app-layout .communication-page .cc-conv-col,
+.app-layout .communication-page .cc-chat-col {
+  background: #fff;
+}
+
+.app-layout .communication-page .cc-comm-subnav,
+.app-layout .communication-page .cc-conv-col,
+.app-layout .communication-page .cc-chat-col {
+  border-color: #e3ebe4;
+}
+
+.app-layout .communication-page .cc-subnav-item {
+  color: #68776b;
+}
+
+.app-layout .communication-page .cc-subnav-item.active {
+  color: #176f3e;
+  background: #eaf6ed;
+}
+
+.app-layout .communication-page .cc-conv-search-bar,
+.app-layout .communication-page .cc-chat-search-bar,
+.app-layout .communication-page .cc-composer-area,
+.app-layout .communication-page .cc-chat-header {
+  background: #fff;
+  border-color: #e3ebe4;
+}
+
+.app-layout .communication-page .cc-conv-search-bar,
+.app-layout .communication-page .cc-conv-search-bar input,
+.app-layout .communication-page .cc-chat-search-bar,
+.app-layout .communication-page .cc-chat-search-bar input,
+.app-layout .communication-page .cc-composer-input,
+.app-layout .communication-page .cc-chat-header,
+.app-layout .communication-page .cc-header-name-row h3,
+.app-layout .communication-page .cc-conv-title,
+.app-layout .communication-page .cc-msg-sender-name {
+  color: #293a2e;
+}
+
+.app-layout .communication-page .cc-filter-tabs {
+  background: #f8faf8;
+}
+
+.app-layout .communication-page .cc-tab-pill,
+.app-layout .communication-page .cc-conv-item:hover,
+.app-layout .communication-page .cc-icon-btn:hover {
+  color: #526256;
+  background: #f3f7f3;
+}
+
+.app-layout .communication-page .cc-conv-item.selected {
+  background: #edf7ef;
+  box-shadow: inset 3px 0 #18a45b;
+}
+
+.app-layout .communication-page .cc-conv-item.unread .cc-conv-title {
+  color: #176f3e;
+}
+
+.app-layout .communication-page .cc-group-avatar-badge {
+  color: #176f3e;
+  background: #eaf6ed;
+}
+
+.app-layout .communication-page .cc-you-pill,
+.app-layout .communication-page .cc-staged-file-pill {
+  color: #637267;
+  background: #f0f4f0;
+}
+
+.app-layout .communication-page .cc-chat-search-bar {
+  color: #68776b;
+}
+
+.app-layout .communication-page .cc-pinned-banner {
+  background: #eef7ef;
+  border-color: #dcebdd;
+  color: #3f5945;
+}
+
+.app-layout .communication-page .cc-messages-container {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(24, 164, 91, 0.035), transparent 28%),
+    #f7faf7;
+}
+
+.app-layout .communication-page .bubble-other {
+  background: #fff;
+  border-color: #e4ebe5;
+  color: #293a2e;
+}
+
+.app-layout .communication-page .cc-reply-quote,
+.app-layout .communication-page .cc-attachment-card {
+  background: #f3f7f3;
+  border-color: #e2e9e3;
+  color: #59685d;
+}
+
+.app-layout .communication-page .cc-btn-download,
+.app-layout .communication-page .cc-toolbar-btn {
+  color: #5d6e61;
+  background: #edf3ee;
+}
+
+.app-layout .communication-page .cc-icon-btn {
+  color: #68776b;
+}
+
+.app-layout .communication-page .cc-icon-btn:hover {
+  color: #176f3e;
+}
+
+.app-layout .communication-page .cc-composer-area {
+  border-top-color: #e3ebe4;
+}
+
+.app-layout .communication-page .cc-staged-file-pill button {
+  color: #68776b;
+}
+
+.app-layout .communication-page .cc-mobile-back-bar {
+  background: #fff;
+  border-bottom-color: #e3ebe4;
+}
+
+/* Mobile Responsiveness */
+.cc-mobile-back-bar {
+  display: none;
+  padding: 10px 16px;
+  background: #1c211d;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 768px) {
+  .cc-comm-dashboard {
+    flex-direction: column;
+    height: calc(100vh - 60px);
+  }
+
+  .cc-comm-subnav {
+    width: 100%;
+    height: 54px;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0 10px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .cc-subnav-item {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 10px;
+  }
+
+  .cc-chats-split-layout.mobile-list-view .cc-chat-col {
+    display: none;
+  }
+
+  .cc-chats-split-layout.mobile-chat-view .cc-conv-col {
+    display: none;
+  }
+
+  .cc-conv-col {
+    width: 100%;
+  }
+
+  .cc-mobile-back-bar {
+    display: flex;
+  }
+
+  .cc-faculty-grid,
+  .cc-student-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-directory-page {
+    padding: 16px;
+  }
+}
+

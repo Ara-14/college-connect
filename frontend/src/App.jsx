@@ -140,7 +140,7 @@ const initialCourses = [
     description: 'Learn core concepts and solve problems',
     icon: 'code',
     status: 'In Progress',
-    colorScheme: 'lavender',
+    colorScheme: 'sage',
     progress: 45,
     doodle: '💡',
     resources: [
@@ -250,6 +250,7 @@ const communities = [
 ]
 
 function App() {
+  const [showTideIntro, setShowTideIntro] = useState(true)
   const [authUser, setAuthUser] = useState(() => {
     const saved = localStorage.getItem('cc_auth_user')
     try {
@@ -604,6 +605,20 @@ function App() {
   if (!isLoggedIn) {
     return (
       <div className="login-page">
+        <div className="login-atmosphere" aria-hidden="true">
+          <span className="login-bubble login-bubble-one" />
+          <span className="login-bubble login-bubble-two" />
+          <span className="login-bubble login-bubble-three" />
+          <span className="login-bubble login-bubble-four" />
+          <span className="login-bubble login-bubble-five" />
+          <span className="login-bubble login-bubble-six" />
+          <span className="login-bubble login-bubble-seven" />
+          <span className="login-glint login-glint-one" />
+          <span className="login-glint login-glint-two" />
+          <span className="login-glint login-glint-three" />
+          <span className="login-glint login-glint-four" />
+          <span className="login-glint login-glint-five" />
+        </div>
         {/* Animated Mascots Preserved */}
         <div className="cute-pets" aria-hidden="true">
           <div className="white-cat" title="College Connect Mascot">
@@ -655,7 +670,7 @@ function App() {
           <h2>
             {isRegistering
               ? `Create ${userRole === 'FACULTY' ? 'Faculty' : 'Student'} Account`
-              : `Welcome Back, ${userRole === 'FACULTY' ? 'Professor!' : 'Student!'}`}
+              : `Welcome Back, ${userRole === 'FACULTY' ? 'Professor!' : 'Pal!'}`}
           </h2>
 
           {/* DEMO QUICK LOGIN SWITCHER */}
@@ -800,6 +815,66 @@ function App() {
             </a>
           </p>
         </div>
+
+        {showTideIntro && (
+          <div
+            className="login-tide-intro"
+            aria-hidden="true"
+            onAnimationEnd={(event) => {
+              if (event.target === event.currentTarget) setShowTideIntro(false)
+            }}
+          >
+            <svg className="tide-water" viewBox="0 0 1440 900" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tide-water-gradient" x1="0" y1="0" x2="0.6" y2="1">
+                  <stop offset="0%" stopColor="#55cf7d" />
+                  <stop offset="55%" stopColor="#18a45b" />
+                  <stop offset="100%" stopColor="#107744" />
+                </linearGradient>
+              </defs>
+              <path
+                className="tide-wave-shadow"
+                d="M0 900V520c117-24 177-107 239-230C315 139 430 128 508 217c79 91 77 223 177 303 174 140 422-79 755-2v382H0Z"
+              />
+              <path
+                className="tide-wave-body"
+                d="M0 900V555c117-24 177-107 239-230C315 174 430 163 508 252c79 91 77 223 177 303 174 140 422-79 755-2v347H0Z"
+              />
+              <path
+                className="tide-wave-curl"
+                d="M294 342c47-97 127-127 196-63 47 44 63 119 91 181-46-42-58-97-99-134-53-49-108-29-146 30-42 65-66 138-156 190 55-56 81-131 114-204Z"
+              />
+              <path
+                className="tide-wave-foam"
+                d="M0 526c109-25 163-107 221-220 62-122 170-174 263-106 50 37 74 100 94 164-37-55-56-117-102-149-69-48-145-2-194 89C221 432 165 523 0 562Z"
+              />
+              <path
+                className="tide-wave-detail"
+                d="M26 538c102-29 152-112 207-220m-112 239c88-44 121-112 164-195m-8-26c48-71 108-85 154-46 29 25 44 64 57 101"
+              />
+              <path
+                className="tide-wave-ripples"
+                d="M74 590c96-15 172-73 235-166m-167 188c115-21 185-81 249-172m-176 195c111-9 192-58 271-146m72 126c161 38 321 1 489-66m-397 104c174 28 324-8 480-71"
+              />
+              <path
+                className="tide-wave-scroll"
+                d="M345 331c29-60 79-88 126-60 28 17 39 53 49 86-24-35-42-58-65-59-37-1-55 42-34 67 16 19 43 14 48-6 4-14-8-27-21-22"
+              />
+              <path
+                className="tide-wave-spray"
+                d="M452 181c12-25 27-44 46-54m-25 79c19-34 40-57 67-69m-28 101c19-24 36-40 58-47"
+              />
+              <circle className="tide-bubble tide-bubble-one" cx="560" cy="540" r="11" />
+              <circle className="tide-bubble tide-bubble-two" cx="630" cy="580" r="7" />
+              <circle className="tide-bubble tide-bubble-three" cx="500" cy="492" r="6" />
+            </svg>
+            <span className="tide-splash tide-splash-one" />
+            <span className="tide-splash tide-splash-two" />
+            <span className="tide-splash tide-splash-three" />
+            <span className="tide-splash tide-splash-four" />
+            <span className="tide-brand">C.C</span>
+          </div>
+        )}
       </div>
     )
   }
@@ -916,7 +991,7 @@ function App() {
                 onClick={() => setShowQuickSwitchMenu(!showQuickSwitchMenu)}
                 title="Switch User Role to test real-time communication"
               >
-                <RefreshCw size={13} className="text-purple-400" />
+                <RefreshCw size={13} className="text-emerald-400" />
                 <span className="role-user-name">{displayName}</span>
                 <span className={`cc-role-badge ${authUser?.role === 'FACULTY' ? 'badge-faculty' : 'badge-student'}`}>
                   {authUser?.role === 'FACULTY' ? 'Faculty' : 'Student'}
@@ -1105,7 +1180,7 @@ function App() {
                           setActiveFilter(activeFilter === 'visual' ? 'all' : 'visual')
                         }
                       >
-                        <div className="chip-icon-box purple-chip">
+                        <div className="chip-icon-box green-chip">
                           <Eye size={16} />
                         </div>
                         <span className="chip-label">Visual</span>
@@ -1491,7 +1566,7 @@ function App() {
 
                 {realNotifications.length === 0 ? (
                   <div className="cc-empty-state">
-                    <Bell size={44} className="text-purple-400" />
+                    <Bell size={44} className="text-emerald-400" />
                     <h3>No new notifications</h3>
                     <p>You are all caught up on announcements, deadlines, and messages!</p>
                   </div>

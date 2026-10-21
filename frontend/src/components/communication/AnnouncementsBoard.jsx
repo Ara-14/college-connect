@@ -42,7 +42,7 @@ export default function AnnouncementsBoard({ currentUser, onOpenAnnouncementChat
         </div>
       ) : announcements.length === 0 ? (
         <div className="cc-empty-state">
-          <Bell size={40} className="text-purple-400" />
+          <Bell size={40} className="text-emerald-400" />
           <h3>No Active Announcement Channels</h3>
           <p>Official faculty circulars and deadlines will appear here once published.</p>
         </div>

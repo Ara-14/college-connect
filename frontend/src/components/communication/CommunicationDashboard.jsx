@@ -258,7 +258,7 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
                 />
               ) : (
                 <div className="cc-no-active-chat">
-                  <MessageSquare size={48} className="text-purple-400" />
+                  <MessageSquare size={48} className="text-emerald-400" />
                   <h3>Welcome to College Communication</h3>
                   <p>
                     Select an existing conversation, message a faculty member or peer from the directory, or create a study group.

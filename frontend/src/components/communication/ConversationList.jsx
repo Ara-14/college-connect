@@ -194,7 +194,7 @@ export default function ConversationList({
                     </span>
 
                     <div className="cc-conv-indicators">
-                      {isPinned && <Pin size={13} className="text-purple-400" />}
+                      {isPinned && <Pin size={13} className="text-emerald-400" />}
                       {isMuted && <VolumeX size={13} className="text-gray-500" />}
                       {unreadCount > 0 && (
                         <span className="cc-unread-badge">{unreadCount}</span>

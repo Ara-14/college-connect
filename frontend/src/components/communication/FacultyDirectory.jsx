@@ -226,7 +226,7 @@ export default function FacultyDirectory({ currentUser, onStartConversation }) {
           <div className="cc-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="cc-modal-header">
               <div className="cc-modal-title">
-                <MessageSquare className="text-purple-400" size={20} />
+                <MessageSquare className="text-emerald-400" size={20} />
                 <h3>Send Academic Query to {selectedFacultyForQuery.fullName}</h3>
               </div>
               <button className="cc-icon-btn" onClick={() => setSelectedFacultyForQuery(null)}>

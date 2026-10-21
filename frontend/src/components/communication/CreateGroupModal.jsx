@@ -101,7 +101,7 @@ export default function CreateGroupModal({ currentUser, onClose, onGroupCreated 
       <div className="cc-modal-card cc-modal-wide" onClick={(e) => e.stopPropagation()}>
         <div className="cc-modal-header">
           <div className="cc-modal-title">
-            <Users size={22} className="text-purple-400" />
+            <Users size={22} className="text-emerald-400" />
             <h3>Create New Group or Channel</h3>
           </div>
           <button className="cc-icon-btn" onClick={onClose}>

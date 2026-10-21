@@ -62,7 +62,7 @@ export default function GroupInfoModal({ conversation, currentUser, onClose, onU
       <div className="cc-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="cc-modal-header">
           <div className="cc-modal-title">
-            <Users size={20} className="text-purple-400" />
+            <Users size={20} className="text-emerald-400" />
             <h3>Group Information</h3>
           </div>
           <button className="cc-icon-btn" onClick={onClose}>

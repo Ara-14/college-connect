@@ -437,7 +437,7 @@ export default function ChatWindow({
       {/* PINNED MESSAGE BANNER */}
       {pinnedMsg && (
         <div className="cc-pinned-banner">
-          <Pin size={16} className="text-purple-400" />
+          <Pin size={16} className="text-emerald-400" />
           <div className="cc-pinned-text">
             <strong>Pinned Message: </strong>
             <span>{pinnedMsg.content}</span>
@@ -463,7 +463,7 @@ export default function ChatWindow({
           </div>
         ) : displayedMessages.length === 0 ? (
           <div className="cc-empty-state">
-            <Sparkles size={40} className="text-purple-400" />
+            <Sparkles size={40} className="text-emerald-400" />
             <h3>Start the conversation</h3>
             <p>Send a message, ask an academic question, or share study materials.</p>
           </div>
@@ -553,7 +553,7 @@ export default function ChatWindow({
                           <div className="cc-message-attachments">
                             {msg.attachments.map((att) => (
                               <div key={att.id} className="cc-attachment-card">
-                                <FileText size={24} className="text-purple-400" />
+                                <FileText size={24} className="text-emerald-400" />
                                 <div className="cc-att-info">
                                   <strong>{att.fileName}</strong>
                                   <small>{att.fileSize || att.fileType}</small>
@@ -588,7 +588,7 @@ export default function ChatWindow({
                       {isMe && !msg.isDeleted && (
                         <span className="cc-read-receipt" title={msg.isRead ? 'Read' : 'Delivered'}>
                           {msg.isRead || (msg.readReceipts && msg.readReceipts.length > 0) ? (
-                            <CheckCheck size={14} className="text-purple-400" />
+                            <CheckCheck size={14} className="text-emerald-400" />
                           ) : (
                             <Check size={14} className="text-gray-400" />
                           )}
