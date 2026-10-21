@@ -39,6 +39,7 @@ import {
   Layers,
   Paperclip,
   Award,
+  EyeOff,
   RefreshCw,
 } from 'lucide-react'
 
@@ -275,10 +276,12 @@ function App() {
   // Auth form states
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
   const [college, setCollege] = useState('Visvesvaraya Technological University')
   const [department, setDepartment] = useState('Computer Science & Engineering')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [authError, setAuthError] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   const [showQuickSwitchMenu, setShowQuickSwitchMenu] = useState(false)
@@ -710,22 +713,44 @@ function App() {
               required
             />
 
-            <input
-              type="password"
-              placeholder="Password (Default: college123)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            {isRegistering && (
+            <div className="login-password-field">
               <input
-                type="password"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password (Default: college123)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                className="password-visibility-toggle"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {isRegistering && (
+              <div className="login-password-field">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-visibility-toggle"
+                  onClick={() => setShowConfirmPassword((visible) => !visible)}
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  aria-pressed={showConfirmPassword}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             )}
 
             {!isRegistering && (
@@ -964,7 +989,7 @@ function App() {
         </header>
 
         {/* FEED / CONTENT CONTAINER */}
-        <div className="dashboard-content">
+        <div className={`dashboard-content ${activePage === 'messages' ? 'communication-page' : ''}`}>
           <main className="content-column">
 
             {/* ======================================================== */}

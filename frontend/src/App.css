@@ -194,6 +194,33 @@ h4 {
   transition: all 0.2s;
 }
 
+.login-password-field {
+  position: relative;
+  width: 100%;
+}
+
+.login-card form .login-password-field input {
+  padding-right: 50px;
+}
+
+.password-visibility-toggle {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.68);
+  transform: translateY(-50%);
+  transition: color 0.18s, background 0.18s;
+}
+
+.password-visibility-toggle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .login-card form input:focus {
   border-color: #a3c2fe;
   background: rgba(255, 255, 255, 0.13);
@@ -717,6 +744,19 @@ h4 {
   padding: 24px 28px;
   gap: 28px;
   flex: 1;
+}
+
+.dashboard-content.communication-page {
+  padding: 16px 20px;
+}
+
+.communication-page .content-column {
+  max-width: none;
+  margin: 0;
+}
+
+.communication-page .right-sidebar {
+  display: none;
 }
 
 .content-column {
