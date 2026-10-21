@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Home,
   Search,
@@ -39,9 +39,14 @@ import {
   Layers,
   Paperclip,
   Award,
+  RefreshCw,
 } from 'lucide-react'
 
 import './App.css'
+import CommunicationDashboard from './components/communication/CommunicationDashboard'
+import './components/communication/communication.css'
+import { api } from './services/api'
+import { connectSocket, disconnectSocket, getSocket } from './services/socket'
 
 const initialPosts = [
   {
@@ -244,22 +249,75 @@ const communities = [
 ]
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isRegistering, setIsRegistering] = useState(false)
-  const [userRole, setUserRole] = useState('STUDENT') // 'STUDENT' or 'FACULTY'
+  const [authUser, setAuthUser] = useState(() => {
+    const saved = localStorage.getItem('cc_auth_user')
+    try {
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
 
-  // User input states
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return Boolean(localStorage.getItem('cc_auth_token') && localStorage.getItem('cc_auth_user'))
+  })
+
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [userRole, setUserRole] = useState(() => {
+    const saved = localStorage.getItem('cc_auth_user')
+    try {
+      return saved ? JSON.parse(saved).role : 'STUDENT'
+    } catch {
+      return 'STUDENT'
+    }
+  })
+
+  // Auth form states
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [college, setCollege] = useState('Visvesvaraya Technological University')
-  const [department, setDepartment] = useState('Computer Science')
+  const [department, setDepartment] = useState('Computer Science & Engineering')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+  const [showQuickSwitchMenu, setShowQuickSwitchMenu] = useState(false)
+
+  // Real in-app notifications
+  const [realNotifications, setRealNotifications] = useState([])
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0)
+
+  // Demo accounts for instant two-way testing
+  const demoAccounts = [
+    { name: 'Aarav Sharma', role: 'STUDENT', email: 'aarav@vtu.edu', tag: 'Student (CSE 5th Sem)' },
+    { name: 'Priya Reddy', role: 'STUDENT', email: 'priya@vtu.edu', tag: 'Student (CSE 5th Sem)' },
+    { name: 'Prof. Ramesh Kulkarni', role: 'FACULTY', email: 'ramesh@vtu.edu', tag: 'HOD (Faculty)' },
+    { name: 'Dr. Ananya Sharma', role: 'FACULTY', email: 'ananya@vtu.edu', tag: 'Assistant Prof' },
+    { name: 'Prof. Sunitha Rao', role: 'FACULTY', email: 'sunitha@vtu.edu', tag: 'Faculty (DMs Restricted)' },
+  ]
+
+  // Socket & Notification Sync
+  useEffect(() => {
+    if (isLoggedIn && authUser) {
+      connectSocket(authUser)
+      fetchNotifs()
+    }
+  }, [isLoggedIn, authUser?.id])
+
+  const fetchNotifs = async () => {
+    try {
+      const data = await api.getNotifications()
+      setRealNotifications(data.notifications || [])
+      setUnreadNotifCount(data.unreadCount || 0)
+    } catch (e) {
+      // ignore
+    }
+  }
 
   // Navigation & Feed state
-  const [activePage, setActivePage] = useState('home')
-  const [feedMode, setFeedMode] = useState('learning') // 'learning' (new visual feed) or 'social' (Instagram feed)
-  const [activeFilter, setActiveFilter] = useState('all') // 'all', 'learn', 'visual', 'focus'
+  const [activePage, setActivePage] = useState('messages')
+  const [feedMode, setFeedMode] = useState('learning')
+  const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -286,24 +344,20 @@ function App() {
   const [messageInput, setMessageInput] = useState('')
   const [messages, setMessages] = useState({})
   const [activeChannel, setActiveChannel] = useState('general')
-  const [notifications, setNotifications] = useState([
-    'Prof. Ramesh uploaded Module 2 Notes for DSA 📚',
-    'Priya liked your campus post ❤️',
-    'Coding Club announced Hackathon 2026 💻',
-  ])
 
-  const displayName = fullName.trim() || (userRole === 'FACULTY' ? 'Prof. Arasu' : 'Arasu')
+  const displayName = authUser?.fullName || fullName.trim() || (userRole === 'FACULTY' ? 'Prof. Ramesh' : 'Aarav Sharma')
 
   const myAvatar =
-    userRole === 'FACULTY'
+    authUser?.avatarUrl ||
+    (userRole === 'FACULTY'
       ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
-      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'
+      : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150')
 
   const navigation = [
-    { id: 'home', label: 'Home', icon: Home },
+    { id: 'messages', label: 'Communication Hub', icon: MessageCircle },
+    { id: 'home', label: 'Home Feed', icon: Home },
     { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'vault', label: 'Academic Vault', icon: Sparkles },
-    { id: 'messages', label: 'Chat', icon: MessageCircle },
     { id: 'communities', label: 'Communities', icon: Users },
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -314,23 +368,87 @@ function App() {
     setMobileMenuOpen(false)
   }
 
-  const handleAuth = (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault()
+    setAuthError('')
+    setAuthLoading(true)
 
-    if (isRegistering) {
-      if (password !== confirmPassword) {
-        alert('Passwords do not match!')
-        return
+    try {
+      if (isRegistering) {
+        if (password !== confirmPassword) {
+          throw new Error('Passwords do not match!')
+        }
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters!')
+        }
+        const res = await api.register({
+          email: email.trim(),
+          username: email.split('@')[0],
+          fullName: fullName.trim() || (userRole === 'FACULTY' ? 'Prof. Faculty' : 'Student User'),
+          password,
+          role: userRole,
+          department: department.trim(),
+          college: college.trim(),
+        })
+        localStorage.setItem('cc_auth_token', res.token)
+        localStorage.setItem('cc_auth_user', JSON.stringify(res.user))
+        setAuthUser(res.user)
+        setUserRole(res.user.role)
+        setIsLoggedIn(true)
+        setActivePage('messages')
+      } else {
+        const res = await api.login(email.trim(), password)
+        localStorage.setItem('cc_auth_token', res.token)
+        localStorage.setItem('cc_auth_user', JSON.stringify(res.user))
+        setAuthUser(res.user)
+        setUserRole(res.user.role)
+        setIsLoggedIn(true)
+        setActivePage('messages')
       }
-
-      if (password.length < 8) {
-        alert('Password must be at least 8 characters!')
-        return
-      }
+    } catch (err) {
+      setAuthError(err.message || 'Authentication failed. Please check credentials.')
+    } finally {
+      setAuthLoading(false)
     }
+  }
 
-    setIsLoggedIn(true)
-    setActivePage('home')
+  const quickLoginAs = async (emailToUse) => {
+    setAuthLoading(true)
+    setAuthError('')
+    try {
+      const res = await api.login(emailToUse, 'college123')
+      localStorage.setItem('cc_auth_token', res.token)
+      localStorage.setItem('cc_auth_user', JSON.stringify(res.user))
+      setAuthUser(res.user)
+      setUserRole(res.user.role)
+      setIsLoggedIn(true)
+      setActivePage('messages')
+      connectSocket(res.user)
+      setShowQuickSwitchMenu(false)
+    } catch (err) {
+      setAuthError(err.message || 'Quick login failed')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('cc_auth_token')
+    localStorage.removeItem('cc_auth_user')
+    disconnectSocket()
+    setAuthUser(null)
+    setIsLoggedIn(false)
+    setShowQuickSwitchMenu(false)
+  }
+
+  const handleMarkAllNotifsRead = async () => {
+    try {
+      await api.markAllNotificationsRead()
+      setRealNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+      setUnreadNotifCount(0)
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const handleTeacherUpload = (e) => {
@@ -537,11 +655,32 @@ function App() {
               : `Welcome Back, ${userRole === 'FACULTY' ? 'Professor!' : 'Student!'}`}
           </h2>
 
+          {/* DEMO QUICK LOGIN SWITCHER */}
+          <div className="demo-accounts-box">
+            <span className="demo-accounts-title">⚡ Instant Demo Login (Click to Test):</span>
+            <div className="demo-accounts-grid">
+              {demoAccounts.map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  className="demo-account-chip"
+                  onClick={() => quickLoginAs(acc.email)}
+                  disabled={authLoading}
+                >
+                  <strong>{acc.name}</strong>
+                  <small>{acc.tag}</small>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {authError && <div className="cc-error-box cc-mb-2">{authError}</div>}
+
           <form onSubmit={handleAuth}>
             {isRegistering && (
               <>
                 <input
-                  placeholder={userRole === 'FACULTY' ? 'Full Name (e.g. Prof. Arasu)' : 'Full Name (e.g. Arasu)'}
+                  placeholder={userRole === 'FACULTY' ? 'Full Name (e.g. Prof. Ramesh)' : 'Full Name (e.g. Aarav Sharma)'}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -565,7 +704,7 @@ function App() {
 
             <input
               type="email"
-              placeholder={userRole === 'FACULTY' ? 'Faculty Email (@college.edu / @vtu.ac.in)' : 'College Student Email'}
+              placeholder={userRole === 'FACULTY' ? 'Faculty Email (e.g. ramesh@vtu.edu)' : 'College Student Email (e.g. aarav@vtu.edu)'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -573,7 +712,7 @@ function App() {
 
             <input
               type="password"
-              placeholder="Password"
+              placeholder="Password (Default: college123)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -608,8 +747,12 @@ function App() {
               </div>
             )}
 
-            <button type="submit" className="login-submit-btn">
-              {isRegistering ? 'Create Account' : `Log In as ${userRole === 'FACULTY' ? 'Faculty' : 'Student'}`}
+            <button type="submit" className="login-submit-btn" disabled={authLoading}>
+              {authLoading
+                ? 'Connecting...'
+                : isRegistering
+                ? 'Create Account'
+                : `Log In as ${userRole === 'FACULTY' ? 'Faculty' : 'Student'}`}
             </button>
           </form>
 
@@ -625,6 +768,7 @@ function App() {
                 setIsRegistering(!isRegistering)
                 setPassword('')
                 setConfirmPassword('')
+                setAuthError('')
               }}
             >
               {isRegistering ? 'Log In' : 'Register'}
@@ -739,6 +883,44 @@ function App() {
           </div>
 
           <div className="header-action-group">
+            {/* Quick Demo Switcher for Pair Testing */}
+            <div className="profile-switcher-wrapper">
+              <button
+                type="button"
+                className="profile-switcher-btn"
+                onClick={() => setShowQuickSwitchMenu(!showQuickSwitchMenu)}
+                title="Switch User Role to test real-time communication"
+              >
+                <RefreshCw size={13} className="text-purple-400" />
+                <span className="role-user-name">{displayName}</span>
+                <span className={`cc-role-badge ${authUser?.role === 'FACULTY' ? 'badge-faculty' : 'badge-student'}`}>
+                  {authUser?.role === 'FACULTY' ? 'Faculty' : 'Student'}
+                </span>
+              </button>
+
+              {showQuickSwitchMenu && (
+                <div className="quick-switch-dropdown">
+                  <div className="dropdown-header">Switch User / Test Roles:</div>
+                  {demoAccounts.map((acc) => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      className={`switch-item ${authUser?.email === acc.email ? 'current' : ''}`}
+                      onClick={() => quickLoginAs(acc.email)}
+                    >
+                      <span className="switch-name">{acc.name}</span>
+                      <small className="switch-tag">{acc.tag}</small>
+                    </button>
+                  ))}
+                  <div className="dropdown-divider" />
+                  <button type="button" className="switch-item logout" onClick={handleLogout}>
+                    <LogOut size={14} />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Faculty Exclusive Upload Button */}
             {userRole === 'FACULTY' ? (
               <button
@@ -774,7 +956,9 @@ function App() {
               aria-label="Notifications"
             >
               <Bell size={21} />
-              <span className="bell-red-dot" />
+              {unreadNotifCount > 0 && (
+                <span className="bell-red-badge">{unreadNotifCount}</span>
+              )}
             </button>
           </div>
         </header>
@@ -1241,80 +1425,87 @@ function App() {
               </div>
             )}
 
-            {/* MESSAGES TAB */}
+            {/* COMMUNICATION MODULE (FULL SUITE) */}
             {activePage === 'messages' && (
-              <div className="messages-layout">
-                <div className="chat-list">
-                  <h3>Direct Messages</h3>
-
-                  {students.map((student) => (
-                    <button
-                      key={student.id}
-                      className={`chat-person ${
-                        activeChat.id === student.id ? 'selected' : ''
-                      }`}
-                      onClick={() => setActiveChat(student)}
-                    >
-                      <img src={student.avatar} alt="" className="avatar" />
-                      <div>
-                        <strong>{student.name}</strong>
-                        <small>{student.online ? 'Online' : 'Offline'}</small>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="chat-window">
-                  <div className="chat-header">
-                    <img src={activeChat.avatar} alt="" className="avatar" />
-                    <div>
-                      <strong>{activeChat.name}</strong>
-                      <small>{activeChat.online ? '🟢 Online' : 'Offline'}</small>
-                    </div>
-                  </div>
-
-                  <div className="chat-messages">
-                    <div className="chat-empty">
-                      <MessageCircle size={36} />
-                      <h3>Chat with {activeChat.name}</h3>
-                      <p>Share notes, study questions, or talk campus events.</p>
-                    </div>
-
-                    {(messages[activeChat.id] || []).map((msg) => (
-                      <div key={msg.id} className="chat-bubble">
-                        {msg.text}
-                      </div>
-                    ))}
-                  </div>
-
-                  <form className="chat-input" onSubmit={sendMessage}>
-                    <input
-                      placeholder={`Message ${activeChat.name}...`}
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                    />
-                    <button type="submit">
-                      <Send size={18} />
-                    </button>
-                  </form>
-                </div>
-              </div>
+              <CommunicationDashboard
+                currentUser={
+                  authUser || {
+                    id: 'guest',
+                    fullName: displayName,
+                    role: userRole,
+                    department: department,
+                    avatarUrl: myAvatar,
+                    allowStudentDMs: true,
+                  }
+                }
+                onProfileUpdated={(updated) => {
+                  setAuthUser(updated)
+                  localStorage.setItem('cc_auth_user', JSON.stringify(updated))
+                }}
+              />
             )}
 
             {/* NOTIFICATIONS TAB */}
             {activePage === 'notifications' && (
               <div className="page-panel">
-                <h2>Notifications 🔔</h2>
-                <p>Stay updated on college notes, club events, and friends.</p>
-
-                {notifications.map((note, index) => (
-                  <div className="notification-item" key={index}>
-                    <div className="notification-icon">
-                      <Bell size={18} />
-                    </div>
-                    <span>{note}</span>
+                <div className="vault-header-row">
+                  <div>
+                    <h2>Notifications & Bulletins 🔔</h2>
+                    <p>Real-time updates on college messages, announcements, and academic updates.</p>
                   </div>
-                ))}
+                  {unreadNotifCount > 0 && (
+                    <button
+                      className="primary-button"
+                      onClick={handleMarkAllNotifsRead}
+                    >
+                      <Check size={16} />
+                      <span>Mark all as read</span>
+                    </button>
+                  )}
+                </div>
+
+                {realNotifications.length === 0 ? (
+                  <div className="cc-empty-state">
+                    <Bell size={44} className="text-purple-400" />
+                    <h3>No new notifications</h3>
+                    <p>You are all caught up on announcements, deadlines, and messages!</p>
+                  </div>
+                ) : (
+                  <div className="notifications-list-container">
+                    {realNotifications.map((note) => (
+                      <div
+                        className={`notification-item ${!note.isRead ? 'unread-notif' : ''}`}
+                        key={note.id}
+                        onClick={async () => {
+                          if (!note.isRead) {
+                            await api.markNotificationRead(note.id)
+                            setRealNotifications((prev) =>
+                              prev.map((n) => (n.id === note.id ? { ...n, isRead: true } : n))
+                            )
+                            setUnreadNotifCount((prev) => Math.max(0, prev - 1))
+                          }
+                          if (note.entityId) {
+                            navigate('messages')
+                          }
+                        }}
+                      >
+                        <div className="notification-icon">
+                          <Bell size={18} />
+                        </div>
+                        <div className="notif-text-box">
+                          <div className="cc-flex-between">
+                            <strong>{note.title || 'Campus Notification'}</strong>
+                            <small className="cc-text-muted">
+                              {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </small>
+                          </div>
+                          <p>{note.message}</p>
+                        </div>
+                        {!note.isRead && <span className="notif-unread-dot" />}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

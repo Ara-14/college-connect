@@ -8,41 +8,55 @@ generator client {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  username     String    @unique
-  fullName     String
-  passwordHash String
-  collegeId    String?
-  collegeName  String?
-  department   String?
-  yearOfStudy  String?
-  bio          String?   @db.Text
-  avatarUrl    String?
-  role         String    @default("STUDENT") // STUDENT, FACULTY, ADMIN
-  isVerified   Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  email           String    @unique
+  username        String    @unique
+  fullName        String
+  passwordHash    String
+  collegeId       String?
+  collegeName     String?
+  department      String?
+  semester        String?   // e.g. "3rd Sem", "5th Sem"
+  section         String?   // e.g. "Section A", "Section B"
+  yearOfStudy     String?
+  rollNumber      String?   // USN or Faculty Employee ID
+  bio             String?   @db.Text
+  avatarUrl       String?
+  role            String    @default("STUDENT") // STUDENT, FACULTY, ADMIN
+  isVerified      Boolean   @default(false)
+  allowStudentDMs Boolean   @default(true) // Faculty can disable incoming student DMs
+  status          String    @default("ONLINE") // ONLINE, AWAY, OFFLINE
+  officeHours     String?   // For faculty (e.g., "Mon-Wed 2-4 PM")
+  lastSeenAt      DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  college      College?  @relation(fields: [collegeId], references: [id], onDelete: SetNull)
+  college         College?  @relation(fields: [collegeId], references: [id], onDelete: SetNull)
 
   // Social & Posts
-  posts        Post[]
-  likes        Like[]
-  comments     Comment[]
-  savedPosts   SavedPost[]
-  stories      Story[]
+  posts           Post[]
+  likes           Like[]
+  comments        Comment[]
+  savedPosts      SavedPost[]
+  stories         Story[]
 
   // Academic Resources (Teacher uploads)
   uploadedResources AcademicResource[]
 
   // Follow graph
-  followers    Follow[]  @relation("UserFollowers")
-  following    Follow[]  @relation("UserFollowing")
+  followers       Follow[]  @relation("UserFollowers")
+  following       Follow[]  @relation("UserFollowing")
 
-  // Messaging & Communities
+  // Messaging & Conversations
   conversations         ConversationMember[]
+  createdConversations  Conversation[]       @relation("ConversationCreator")
   messagesSent          Message[]
+  messageReadReceipts   MessageReadReceipt[]
+  messageReports        MessageReport[]
+  blockedUsers          UserBlock[]          @relation("UserBlocker")
+  blockedByUsers        UserBlock[]          @relation("UserBlocked")
+
+  // Communities
   createdCommunities    Community[]          @relation("CommunityCreator")
   communityMemberships  CommunityMember[]
   channelMessages       ChannelMessage[]
@@ -54,6 +68,7 @@ model User {
   @@index([email])
   @@index([username])
   @@index([role])
+  @@index([department])
 }
 
 model College {
@@ -162,19 +177,45 @@ model Story {
   @@index([expiresAt])
 }
 
-model Conversation {
-  id        String               @id @default(uuid())
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
+// ==========================================
+// COMMUNICATION MODULE SCHEMAS
+// ==========================================
 
-  members   ConversationMember[]
-  messages  Message[]
+model Conversation {
+  id              String               @id @default(uuid())
+  title           String?              // Group name or Subject for academic query
+  description     String?              @db.Text
+  type            String               @default("DIRECT") // DIRECT, GROUP, ANNOUNCEMENT, QUERY
+  avatarUrl       String?
+  createdById     String?
+  department      String?              // For department groups
+  semester        String?              // For class/semester groups
+  section         String?              // For section groups
+  subject         String?              // For course/subject study groups or queries
+  isFacultyOnly   Boolean              @default(false)
+  isReadOnly      Boolean              @default(false) // e.g. Announcement channels
+  pinnedMessageId String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  creator         User?                @relation("ConversationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  members         ConversationMember[]
+  messages        Message[]
+  pinnedMessage   Message?             @relation("PinnedConversationMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([department])
+  @@index([createdById])
 }
 
 model ConversationMember {
   id             String       @id @default(uuid())
   conversationId String
   userId         String
+  role           String       @default("MEMBER") // ADMIN, MEMBER
+  isMuted        Boolean      @default(false)
+  isArchived     Boolean      @default(false)
+  lastReadAt     DateTime     @default(now())
   joinedAt       DateTime     @default(now())
 
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -182,22 +223,100 @@ model ConversationMember {
 
   @@unique([conversationId, userId])
   @@index([userId])
+  @@index([conversationId])
 }
 
 model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  senderId       String
-  content        String       @db.Text
-  isRead         Boolean      @default(false)
-  createdAt      DateTime     @default(now())
+  id                  String               @id @default(uuid())
+  conversationId      String
+  senderId            String
+  content             String               @db.Text
+  messageType         String               @default("TEXT") // TEXT, FILE, IMAGE, ANNOUNCEMENT, SYSTEM
+  replyToId           String?
+  isEdited            Boolean              @default(false)
+  isPinned            Boolean              @default(false)
+  isDeleted           Boolean              @default(false)
+  queryCategory       String?              // "Assignment Help", "Project Guidance", "Exam Query", "General"
+  isRead              Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation        Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender              User                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo             Message?             @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies             Message[]            @relation("MessageReplies")
+  attachments         MessageAttachment[]
+  readReceipts        MessageReadReceipt[]
+  reports             MessageReport[]
+  pinnedInConversations Conversation[]     @relation("PinnedConversationMessage")
 
   @@index([conversationId])
   @@index([senderId])
+  @@index([replyToId])
+  @@index([createdAt])
 }
+
+model MessageAttachment {
+  id          String   @id @default(uuid())
+  messageId   String
+  fileName    String
+  fileUrl     String
+  fileType    String   @default("FILE") // PDF, IMAGE, DOC, OTHER
+  fileSize    String?
+  mimeType    String?
+  createdAt   DateTime @default(now())
+
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+model MessageReadReceipt {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model MessageReport {
+  id           String   @id @default(uuid())
+  messageId    String
+  reportedById String
+  reason       String   @db.Text
+  status       String   @default("PENDING") // PENDING, RESOLVED, DISMISSED
+  createdAt    DateTime @default(now())
+
+  message      Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  reportedBy   User     @relation(fields: [reportedById], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([reportedById])
+}
+
+model UserBlock {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker   User     @relation("UserBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("UserBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+// ==========================================
+// COMMUNITIES & NOTIFICATIONS & ACADEMICS
+// ==========================================
 
 model Community {
   id          String            @id @default(uuid())
@@ -258,7 +377,7 @@ model Notification {
   id          String   @id @default(uuid())
   recipientId String
   actorId     String?
-  type        String   // LIKE, COMMENT, FOLLOW, MESSAGE, ANNOUNCEMENT
+  type        String   // LIKE, COMMENT, FOLLOW, MESSAGE, REPLY, GROUP_INVITE, ANNOUNCEMENT, ACADEMIC_UPDATE
   title       String?
   message     String
   entityId    String?

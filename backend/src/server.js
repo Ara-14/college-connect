@@ -6,6 +6,7 @@ import { Server as SocketIOServer } from 'socket.io'
 import app from './app.js'
 import { config } from './config/env.js'
 import prisma from './config/prisma.js'
+import { initSocket } from './socket/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -18,40 +19,20 @@ if (!fs.existsSync(uploadDirectory)) {
 
 const server = http.createServer(app)
 
-// Initialize Socket.IO for future real-time direct messaging and notifications
+// Initialize Socket.IO
 const io = new SocketIOServer(server, {
   cors: {
     origin: [config.clientUrl, 'http://localhost:5173', 'http://127.0.0.1:5173'],
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     credentials: true,
   },
 })
 
-// Store connected sockets
-const onlineUsers = new Map() // userId -> socketId
-
-io.on('connection', (socket) => {
-  console.log(`[Socket] User connected: ${socket.id}`)
-
-  socket.on('register_user', (userId) => {
-    onlineUsers.set(userId, socket.id)
-    io.emit('online_users', Array.from(onlineUsers.keys()))
-  })
-
-  socket.on('disconnect', () => {
-    for (const [userId, socketId] of onlineUsers.entries()) {
-      if (socketId === socket.id) {
-        onlineUsers.delete(userId)
-        break
-      }
-    }
-    io.emit('online_users', Array.from(onlineUsers.keys()))
-    console.log(`[Socket] User disconnected: ${socket.id}`)
-  })
-})
-
-// Attach io instance to app for access in routes/controllers if needed
+// Attach io instance to app for access in routes/controllers
 app.set('io', io)
+
+// Initialize comprehensive socket handlers
+initSocket(io)
 
 const PORT = config.port
 
