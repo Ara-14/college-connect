@@ -641,8 +641,8 @@ function App() {
 
         <div className="login-card">
           <img
-            src="/college-logo.png"
-            alt="VTU College Logo"
+            src="/cc-logo.png"
+            alt="College Connect C.C logo"
             className="college-logo"
           />
 
@@ -872,7 +872,7 @@ function App() {
             <span className="tide-splash tide-splash-two" />
             <span className="tide-splash tide-splash-three" />
             <span className="tide-splash tide-splash-four" />
-            <span className="tide-brand">C.C</span>
+            <img className="tide-brand" src="/cc-logo.png" alt="" />
           </div>
         )}
       </div>
@@ -887,7 +887,7 @@ function App() {
       {/* LEFT NAVIGATION SIDEBAR */}
       <aside className={`sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="brand" onClick={() => navigate('home')}>
-          <img src="/college-logo.png" alt="College Logo" />
+          <img src="/cc-logo.png" alt="College Connect logo" />
           <div>
             <strong>College Connect</strong>
             <span>CAMPUS LEARNING & SOCIAL</span>

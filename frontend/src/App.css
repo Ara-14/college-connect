@@ -125,8 +125,8 @@ h4 {
 
 .college-logo {
   display: block;
-  width: 82px;
-  height: 82px;
+  width: 112px;
+  height: 60px;
   object-fit: contain;
   margin: 0 auto 12px;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
@@ -419,7 +419,7 @@ h4 {
 }
 
 .brand img {
-  width: 38px;
+  width: 48px;
   height: 38px;
   object-fit: contain;
 }
@@ -2708,15 +2708,11 @@ h4 {
   place-items: center;
   width: clamp(120px, 22vw, 190px);
   aspect-ratio: 1;
+  padding: 22px;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 50%;
-  background: var(--login-green);
-  color: #fff;
-  font-family: var(--font-heading);
-  font-size: clamp(42px, 9vw, 76px);
-  font-weight: 800;
-  letter-spacing: -0.09em;
-  padding-right: 0.08em;
+  background: #fff;
+  object-fit: contain;
   box-shadow: 0 18px 60px rgba(13, 104, 54, 0.2);
   animation: tide-mark-splash 3.4s ease-in-out forwards;
 }
@@ -3072,4 +3068,3 @@ h4 {
 .app-layout .modal-overlay {
   background: rgba(20, 35, 24, 0.36);
 }
-
