@@ -1,5 +1,22 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000'
+const API_ORIGIN = /^https?:\/\//.test(API_BASE_URL) ? new URL(API_BASE_URL).origin : ''
+const MEDIA_BASE_URL = (import.meta.env.VITE_MEDIA_BASE_URL || API_ORIGIN || SOCKET_URL).replace(/\/$/, '')
+
+export const getFullMediaUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url
+  }
+  return `${MEDIA_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
+export const getDefaultAvatar = (name = 'Student', role = 'STUDENT') => {
+  if (role === 'FACULTY') {
+    return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'
+  }
+  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=7c3aed,3b82f6`
+}
 
 const getHeaders = (isMultipart = false) => {
   const token = localStorage.getItem('cc_auth_token')
@@ -19,10 +36,12 @@ const handleResponse = async (response) => {
     try {
       const errorData = await response.json()
       errorMsg = errorData.error || errorData.message || errorMsg
-    } catch (e) {
+    } catch {
       errorMsg = response.statusText || errorMsg
     }
-    throw new Error(errorMsg)
+    const error = new Error(errorMsg)
+    error.status = response.status
+    throw error
   }
   return response.json()
 }
@@ -63,9 +82,70 @@ export const api = {
     return handleResponse(res)
   },
 
+  async uploadAvatar(file) {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    const res = await fetch(`${API_BASE_URL}/auth/avatar`, {
+      method: 'POST',
+      headers: getHeaders(true),
+      body: formData,
+    })
+    return handleResponse(res)
+  },
+
   async getUsers(params = {}) {
     const query = new URLSearchParams(params).toString()
     const res = await fetch(`${API_BASE_URL}/auth/users${query ? `?${query}` : ''}`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  // Posts & Social Feed
+  async getPosts() {
+    const res = await fetch(`${API_BASE_URL}/posts`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async createPost(formData) {
+    const res = await fetch(`${API_BASE_URL}/posts`, {
+      method: 'POST',
+      headers: getHeaders(true),
+      body: formData,
+    })
+    return handleResponse(res)
+  },
+
+  async toggleLike(postId) {
+    const res = await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
+      method: 'POST',
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async addComment(postId, content) {
+    const res = await fetch(`${API_BASE_URL}/posts/${postId}/comment`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ content }),
+    })
+    return handleResponse(res)
+  },
+
+  async toggleSave(postId) {
+    const res = await fetch(`${API_BASE_URL}/posts/${postId}/save`, {
+      method: 'POST',
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async deletePost(postId) {
+    const res = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+      method: 'DELETE',
       headers: getHeaders(),
     })
     return handleResponse(res)
@@ -75,6 +155,15 @@ export const api = {
   async getConversations() {
     const res = await fetch(`${API_BASE_URL}/communication/conversations`, {
       headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async askPersonalAI(prompt) {
+    const res = await fetch(`${API_BASE_URL}/ai/ask`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ prompt }),
     })
     return handleResponse(res)
   },
@@ -287,6 +376,30 @@ export const api = {
     return handleResponse(res)
   },
 
+  async getCommunityChannels() {
+    const res = await fetch(`${API_BASE_URL}/communities/channels`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async getCommunityEvents(channelId) {
+    const query = channelId ? `?channelId=${encodeURIComponent(channelId)}` : ''
+    const res = await fetch(`${API_BASE_URL}/communities/events${query}`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async createCommunityEvent(data) {
+    const res = await fetch(`${API_BASE_URL}/communities/events`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
   async reportMessage(messageId, category, details = '') {
     const res = await fetch(`${API_BASE_URL}/communication/messages/${messageId}/report`, {
       method: 'POST',
@@ -331,6 +444,14 @@ export const api = {
   // Academic vault
   async getCourses() {
     const res = await fetch(`${API_BASE_URL}/academic/courses`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async recordResourceDownload(resourceId) {
+    const res = await fetch(`${API_BASE_URL}/academic/resources/${resourceId}/download`, {
+      method: 'POST',
       headers: getHeaders(),
     })
     return handleResponse(res)

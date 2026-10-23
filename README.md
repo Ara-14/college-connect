@@ -57,15 +57,40 @@ From the project root directory:
 docker compose up --build
 ```
 
-On first run, create the database tables from the Prisma schema. Run this again after pulling schema updates (including chat message tags and Free to Talk moderation data) to sync PostgreSQL:
+For a new or empty database, apply the checked-in initial schema and additive migrations:
 ```powershell
-docker compose exec backend npm run prisma:push
+docker compose exec backend npx prisma migrate deploy
 ```
+
+For an existing database created before migrations were introduced, mark its existing schema as the baseline once, then apply pending additive migrations:
+```powershell
+docker compose exec backend npx prisma migrate resolve --applied 20261023000000_initial_schema
+docker compose exec backend npx prisma migrate deploy
+```
+
+The community migration adds persistent community events and links channels to their group conversations. These commands preserve existing data; do not use `prisma migrate reset`.
 
 - **Frontend:** [http://localhost:5173](http://localhost:5173)
 - **Backend API:** [http://localhost:5000](http://localhost:5000)
 - **Health Check:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
 - **PostgreSQL:** Port `5432`
+
+### Personal AI setup
+
+Personal AI uses Google Gemini with Google Search grounding. Create a root `.env` file beside `compose.yaml` and add your key there (never put it in frontend configuration or commit it):
+
+```dotenv
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.8-flash
+```
+
+Then restart the backend:
+
+```powershell
+docker compose up -d --build backend
+```
+
+Inside any regular chat or community channel, send `@AI your question` to open a private Personal AI answer with grounded source links. The prompt after `@AI` is sent to Google; conversation messages, attachments, and chat history are not included. AI requests and answers are not posted to the chat. PDF links are shown when a cited source directly links to a PDF. The Gemini key stays in the backend environment.
 
 To stop all services:
 ```powershell
@@ -98,3 +123,11 @@ cd ../frontend
 npm install
 npm run dev
 ```
+
+### Profiles, academic resources, and communities
+
+- Users can edit and save their own profile bio.
+- Faculty and admins can publish course notes and official announcement messages.
+- Signed-in users can chat in community channels, share images, and record voice notes.
+- Signed-in users can publish events within community channels.
+- Personal AI answers academic questions using Gemini and Google Search citations when `GEMINI_API_KEY` is configured.

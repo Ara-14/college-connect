@@ -26,6 +26,8 @@ export const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
   freeToTalkMessageRateLimitSeconds: Number.isFinite(configuredFreeToTalkRateLimit)
     ? Math.min(60, Math.max(1, configuredFreeToTalkRateLimit))
     : 5,

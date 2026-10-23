@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Search, Mail, MessageSquare, Clock, MapPin, ShieldAlert, Sparkles, AlertCircle } from 'lucide-react'
-import { api } from '../../services/api'
+import { api, getDefaultAvatar, getFullMediaUrl } from '../../services/api'
 
 export default function FacultyDirectory({ currentUser, onStartConversation }) {
   const [faculty, setFaculty] = useState([])
@@ -165,7 +165,11 @@ export default function FacultyDirectory({ currentUser, onStartConversation }) {
               <div key={prof.id} className="cc-faculty-card">
                 <div className="cc-faculty-top">
                   <div className="cc-avatar-wrapper">
-                    <img src={prof.avatarUrl} alt="" className="cc-faculty-avatar" />
+                    <img
+                      src={getFullMediaUrl(prof.avatarUrl) || getDefaultAvatar(prof.fullName, prof.role)}
+                      alt={`${prof.fullName}'s profile`}
+                      className="cc-faculty-avatar"
+                    />
                     <span className={`cc-status-dot ${prof.status === 'ONLINE' ? 'online' : 'offline'}`} />
                   </div>
                   <div className="cc-faculty-titles">
@@ -236,7 +240,11 @@ export default function FacultyDirectory({ currentUser, onStartConversation }) {
 
             <form onSubmit={handleSendStudentQuery} className="cc-modal-form">
               <div className="cc-faculty-card-preview">
-                <img src={selectedFacultyForQuery.avatarUrl} alt="" className="cc-avatar-sm" />
+                <img
+                  src={getFullMediaUrl(selectedFacultyForQuery.avatarUrl) || getDefaultAvatar(selectedFacultyForQuery.fullName, selectedFacultyForQuery.role)}
+                  alt={`${selectedFacultyForQuery.fullName}'s profile`}
+                  className="cc-avatar-sm"
+                />
                 <div>
                   <strong>{selectedFacultyForQuery.fullName}</strong>
                   <p>{selectedFacultyForQuery.department}</p>

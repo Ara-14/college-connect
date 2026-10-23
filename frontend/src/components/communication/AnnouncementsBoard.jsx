@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Bell, Pin, FileText, Calendar, Send, ShieldAlert, ArrowRight, User } from 'lucide-react'
-import { api } from '../../services/api'
+import { api, getFullMediaUrl } from '../../services/api'
 
 export default function AnnouncementsBoard({ currentUser, onOpenAnnouncementChat }) {
   const [announcements, setAnnouncements] = useState([])
@@ -102,7 +102,7 @@ export default function AnnouncementsBoard({ currentUser, onOpenAnnouncementChat
                         {latest.attachments.map((att) => (
                           <a
                             key={att.id}
-                            href={`http://localhost:5000${att.fileUrl}`}
+                            href={getFullMediaUrl(att.fileUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="cc-ann-attachment-pill"

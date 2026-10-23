@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Users, ShieldAlert, Sparkles, Check, Search, Lock } from 'lucide-react'
-import { api } from '../../services/api'
+import { api, getDefaultAvatar, getFullMediaUrl } from '../../services/api'
 
 export default function CreateGroupModal({ currentUser, onClose, onGroupCreated }) {
   const isFaculty = currentUser.role === 'FACULTY' || currentUser.role === 'ADMIN'
@@ -231,7 +231,11 @@ export default function CreateGroupModal({ currentUser, onClose, onGroupCreated 
                       className={`cc-member-select-item ${isSelected ? 'selected' : ''}`}
                       onClick={() => toggleUser(u.id)}
                     >
-                      <img src={u.avatarUrl} alt="" className="cc-avatar-sm" />
+                      <img
+                        src={getFullMediaUrl(u.avatarUrl) || getDefaultAvatar(u.fullName, u.role)}
+                        alt={`${u.fullName}'s profile`}
+                        className="cc-avatar-sm"
+                      />
                       <div className="cc-member-info">
                         <div className="cc-member-name-row">
                           <strong>{u.fullName}</strong>

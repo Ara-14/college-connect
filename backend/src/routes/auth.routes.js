@@ -1,9 +1,11 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import fs from 'fs'
 import prisma from '../config/prisma.js'
 import { config } from '../config/env.js'
 import { authenticate } from '../middleware/auth.js'
+import { imageUploadMiddleware, isSupportedImageUpload } from '../middleware/upload.js'
 
 const router = Router()
 
@@ -167,7 +169,12 @@ router.patch('/profile', authenticate, async (req, res, next) => {
     const { bio, allowStudentDMs, officeHours, status, avatarUrl, department, semester, section } = req.body
 
     const updateData = {}
-    if (bio !== undefined) updateData.bio = bio
+    if (bio !== undefined) {
+      if (typeof bio !== 'string' || bio.length > 500) {
+        return res.status(400).json({ error: 'Bio must be 500 characters or fewer.' })
+      }
+      updateData.bio = bio.trim()
+    }
     if (allowStudentDMs !== undefined) updateData.allowStudentDMs = Boolean(allowStudentDMs)
     if (officeHours !== undefined) updateData.officeHours = officeHours
     if (status !== undefined) updateData.status = status
@@ -200,6 +207,60 @@ router.patch('/profile', authenticate, async (req, res, next) => {
 
     res.json({ user: updatedUser })
   } catch (error) {
+    next(error)
+  }
+})
+
+// Upload & change profile picture (avatar)
+router.post('/avatar', authenticate, imageUploadMiddleware.single('avatar'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please select an image file to upload.' })
+    }
+
+    if (!isSupportedImageUpload(req.file)) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path)
+      return res.status(400).json({ error: 'The selected file is not a valid JPG, JPEG, PNG, or WebP image.' })
+    }
+
+    const avatarUrl = `/uploads/${req.file.filename}`
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        fullName: true,
+        role: true,
+        department: true,
+        semester: true,
+        section: true,
+        yearOfStudy: true,
+        rollNumber: true,
+        bio: true,
+        avatarUrl: true,
+        allowStudentDMs: true,
+        status: true,
+        officeHours: true,
+      },
+    })
+
+    res.json({
+      success: true,
+      user: updatedUser,
+      avatarUrl: updatedUser.avatarUrl,
+      message: 'Profile picture updated successfully.',
+    })
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path)
+      } catch (cleanupError) {
+        console.error('Failed to remove an unassociated profile image:', cleanupError.message)
+      }
+    }
     next(error)
   }
 })

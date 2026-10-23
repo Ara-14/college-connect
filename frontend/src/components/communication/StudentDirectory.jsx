@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Search, MessageSquare, BookOpen, User, Sparkles } from 'lucide-react'
-import { api } from '../../services/api'
+import { api, getDefaultAvatar, getFullMediaUrl } from '../../services/api'
 
 export default function StudentDirectory({ currentUser, onStartConversation }) {
   const [students, setStudents] = useState([])
@@ -132,7 +132,11 @@ export default function StudentDirectory({ currentUser, onStartConversation }) {
               <div key={s.id} className="cc-student-card">
                 <div className="cc-student-top">
                   <div className="cc-avatar-wrapper">
-                    <img src={s.avatarUrl} alt="" className="cc-student-avatar" />
+                    <img
+                      src={getFullMediaUrl(s.avatarUrl) || getDefaultAvatar(s.fullName, s.role)}
+                      alt={`${s.fullName}'s profile`}
+                      className="cc-student-avatar"
+                    />
                     <span className={`cc-status-dot ${isOnline ? 'online' : 'offline'}`} />
                   </div>
 

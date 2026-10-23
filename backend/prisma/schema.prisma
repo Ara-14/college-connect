@@ -66,6 +66,7 @@ model User {
   createdCommunities    Community[]          @relation("CommunityCreator")
   communityMemberships  CommunityMember[]
   channelMessages       ChannelMessage[]
+  createdCommunityEvents CommunityEvent[]
 
   // Notifications
   notificationsReceived Notification[]       @relation("UserNotificationsReceived")
@@ -202,6 +203,7 @@ model Conversation {
   isReadOnly      Boolean              @default(false) // e.g. Announcement channels
   pinnedMessageId String?
   freeToTalkKey   String?              @unique
+  communityChannelId String?           @unique
   messageRateLimitSeconds Int           @default(3)
   reportReviewHours Int                @default(48)
   createdAt       DateTime             @default(now())
@@ -211,6 +213,7 @@ model Conversation {
   members         ConversationMember[]
   messages        Message[]
   pinnedMessage   Message?             @relation("PinnedConversationMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+  communityChannel Channel?            @relation(fields: [communityChannelId], references: [id], onDelete: Cascade)
 
   @@index([type])
   @@index([department])
@@ -431,6 +434,8 @@ model Channel {
 
   community   Community        @relation(fields: [communityId], references: [id], onDelete: Cascade)
   messages    ChannelMessage[]
+  events      CommunityEvent[]
+  conversation Conversation?
 
   @@unique([communityId, name])
   @@index([communityId])
@@ -447,6 +452,22 @@ model ChannelMessage {
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([channelId])
+}
+
+model CommunityEvent {
+  id          String   @id @default(uuid())
+  channelId   String
+  createdById String
+  title       String
+  description String?  @db.Text
+  startsAt    DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  creator     User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([channelId, startsAt])
 }
 
 model Notification {

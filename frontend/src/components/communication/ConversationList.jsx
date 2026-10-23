@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Search, Plus, MessageSquare, Users, Bell, Pin, VolumeX, Archive, Check } from 'lucide-react'
+import { getDefaultAvatar, getFullMediaUrl } from '../../services/api'
 
 export default function ConversationList({
   conversations,
@@ -149,7 +150,11 @@ export default function ConversationList({
                 <div className="cc-conv-avatar-box">
                   {isDirect ? (
                     <>
-                      <img src={avatar} alt="" className="cc-avatar-md" />
+                      <img
+                        src={getFullMediaUrl(avatar) || getDefaultAvatar(title, role || 'STUDENT')}
+                        alt={`${title}'s profile`}
+                        className="cc-avatar-md"
+                      />
                       <span className={`cc-status-dot ${isOnline ? 'online' : 'offline'}`} />
                     </>
                   ) : (

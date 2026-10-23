@@ -1,7 +1,9 @@
 import { Router } from 'express'
+import fs from 'fs/promises'
 import prisma from '../config/prisma.js'
 import { authenticate } from '../middleware/auth.js'
 import { uploadMiddleware } from '../middleware/upload.js'
+import path from 'path'
 
 const router = Router()
 
@@ -29,22 +31,36 @@ router.get('/courses', async (req, res, next) => {
 })
 
 // Faculty upload academic resource (PDF/notes)
-router.post('/upload', authenticate, uploadMiddleware.single('file'), async (req, res, next) => {
+router.post('/upload', authenticate, (req, res, next) => {
+  if (req.user.role !== 'FACULTY' && req.user.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only faculty members can upload academic vault materials.' })
+  }
+  next()
+}, uploadMiddleware.single('file'), async (req, res, next) => {
   try {
     const { title, description, category = 'NOTES', subjectId } = req.body
     const uploader = req.user
 
-    if (!title || !subjectId) {
-      return res.status(400).json({ error: 'Title and subjectId are required.' })
+    if (!title?.trim() || title.trim().length > 200 || !subjectId || !req.file) {
+      if (req.file) await fs.unlink(req.file.path)
+      return res.status(400).json({ error: 'A title under 200 characters, subject, and resource file are required.' })
     }
 
-    if (uploader.role !== 'FACULTY' && uploader.role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Only faculty members can upload academic vault materials.' })
+    const extension = path.extname(req.file.originalname).toLowerCase()
+    if (!['.pdf', '.doc', '.docx', '.ppt', '.pptx'].includes(extension)) {
+      await fs.unlink(req.file.path)
+      return res.status(400).json({ error: 'Academic resources must be PDF, Word, or PowerPoint files.' })
     }
 
-    const fileUrl = req.file ? `/uploads/${req.file.filename}` : '/uploads/sample_notes.pdf'
-    const fileSize = req.file ? `${(req.file.size / (1024 * 1024)).toFixed(1)} MB` : '2.5 MB'
-    const fileFormat = req.file?.originalname.endsWith('.pdf') ? 'PDF' : 'DOC'
+    const subject = await prisma.subject.findUnique({ where: { id: subjectId }, select: { id: true } })
+    if (!subject) {
+      await fs.unlink(req.file.path)
+      return res.status(404).json({ error: 'The selected course was not found.' })
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`
+    const fileSize = `${(req.file.size / (1024 * 1024)).toFixed(1)} MB`
+    const fileFormat = path.extname(req.file.originalname).slice(1).toUpperCase()
 
     const resource = await prisma.academicResource.create({
       data: {
@@ -66,6 +82,11 @@ router.post('/upload', authenticate, uploadMiddleware.single('file'), async (req
 
     res.status(201).json({ resource })
   } catch (error) {
+    if (req.file) {
+      await fs.unlink(req.file.path).catch((cleanupError) => {
+        console.error('Failed to remove an academic upload after an error:', cleanupError.message)
+      })
+    }
     next(error)
   }
 })

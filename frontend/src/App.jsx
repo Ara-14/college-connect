@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Home,
   Search,
@@ -45,60 +45,11 @@ import {
 
 import './App.css'
 import CommunicationDashboard from './components/communication/CommunicationDashboard'
+import CommunityChannels from './components/CommunityChannels'
 import ThemeToggle from './components/ThemeToggle'
 import './components/communication/communication.css'
-import { api } from './services/api'
+import { api, getDefaultAvatar, getFullMediaUrl } from './services/api'
 import { connectSocket, disconnectSocket, getSocket } from './services/socket'
-
-const initialPosts = [
-  {
-    id: 1,
-    user: 'Aarav Sharma',
-    username: 'aarav_sharma',
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
-    location: 'Computer Science Department',
-    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1000',
-    caption: 'Another beautiful day on campus! 🎓✨ Working on the new algorithm assignment.',
-    likes: 248,
-    liked: false,
-    saved: false,
-    time: '2 hours ago',
-    comments: [
-      { user: 'priya', text: 'Amazing picture! ❤️' },
-      { user: 'rahul', text: 'Our campus looks beautiful!' },
-    ],
-  },
-  {
-    id: 2,
-    user: 'Priya Reddy',
-    username: 'priya_reddy',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    location: 'College Cultural Fest',
-    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1000',
-    caption: 'College fest memories! Best night ever! 💜🎉 #CollegeLife',
-    likes: 532,
-    liked: false,
-    saved: false,
-    time: '5 hours ago',
-    comments: [
-      { user: 'aarav', text: 'What an incredible event!' },
-    ],
-  },
-  {
-    id: 3,
-    user: 'Rahul Kumar',
-    username: 'rahul_codes',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    location: 'Coding Club Lab',
-    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000',
-    caption: 'Late-night coding sessions hit different! 💻🔥 Hackathon prep underway.',
-    likes: 189,
-    liked: false,
-    saved: false,
-    time: 'Yesterday',
-    comments: [],
-  },
-]
 
 const students = [
   {
@@ -131,117 +82,6 @@ const students = [
   },
 ]
 
-const initialCourses = [
-  {
-    id: 'dsa',
-    title: 'Data Structures & Algorithms',
-    code: '21CS32',
-    department: 'Computer Science',
-    semester: '3rd Sem',
-    description: 'Learn core concepts and solve problems',
-    icon: 'code',
-    status: 'In Progress',
-    colorScheme: 'sage',
-    progress: 45,
-    doodle: '💡',
-    resources: [
-      {
-        id: 1,
-        title: 'Module 1 & 2: Stacks, Queues & Linked Lists Hand-Written Notes',
-        type: 'Notes',
-        format: 'PDF',
-        size: '3.4 MB',
-        uploadedBy: 'Prof. Ramesh K. (CSE HOD)',
-        date: 'Oct 14, 2026',
-      },
-      {
-        id: 2,
-        title: 'VTU Model Question Paper 2024 (Solved with Marking Scheme)',
-        type: 'Question Paper',
-        format: 'PDF',
-        size: '1.8 MB',
-        uploadedBy: 'Prof. Ramesh K. (CSE HOD)',
-        date: 'Oct 10, 2026',
-      },
-      {
-        id: 3,
-        title: 'Data Structures Laboratory Manual (Programs 1 to 12 with Outputs)',
-        type: 'Lab Manual',
-        format: 'PDF',
-        size: '4.2 MB',
-        uploadedBy: 'Prof. Ramesh K. (CSE HOD)',
-        date: 'Sep 28, 2026',
-      },
-    ],
-  },
-  {
-    id: 'cloud',
-    title: 'Cloud Computing (AWS)',
-    code: '21CS52',
-    department: 'Computer Science & Cloud Tech',
-    semester: '5th Sem',
-    description: 'Build real world skills with AWS',
-    icon: 'cloud',
-    status: 'New',
-    colorScheme: 'peach',
-    progress: 20,
-    doodle: '☁️',
-    resources: [
-      {
-        id: 4,
-        title: 'AWS EC2, S3, IAM & Serverless Architecture Lecture Slides',
-        type: 'Notes',
-        format: 'PDF',
-        size: '5.1 MB',
-        uploadedBy: 'Dr. Ananya Sharma (Assistant Prof)',
-        date: 'Oct 17, 2026',
-      },
-      {
-        id: 5,
-        title: 'Mid-Term Exam Practice Question Bank with Solutions',
-        type: 'Question Paper',
-        format: 'PDF',
-        size: '2.1 MB',
-        uploadedBy: 'Dr. Ananya Sharma (Assistant Prof)',
-        date: 'Oct 15, 2026',
-      },
-    ],
-  },
-  {
-    id: 'dbms',
-    title: 'Database Management Systems',
-    code: '21CS42',
-    department: 'Information Science & CSE',
-    semester: '4th Sem',
-    description: 'SQL, Normalization & Relational models',
-    icon: 'database',
-    status: 'Updated',
-    colorScheme: 'mint',
-    progress: 80,
-    doodle: '⚡',
-    resources: [
-      {
-        id: 6,
-        title: 'Normalization (1NF, 2NF, 3NF, BCNF) with Real World Examples',
-        type: 'Notes',
-        format: 'PDF',
-        size: '2.9 MB',
-        uploadedBy: 'Prof. Sunitha Rao',
-        date: 'Oct 12, 2026',
-      },
-      {
-        id: 7,
-        title: 'Previous 5 Years VTU Exam Question Papers (2019-2024)',
-        type: 'Question Paper',
-        format: 'PDF',
-        size: '6.5 MB',
-        uploadedBy: 'Prof. Sunitha Rao',
-        date: 'Oct 02, 2026',
-      },
-    ],
-  },
-]
-
 const communities = [
   { id: 1, name: 'general', icon: Hash },
   { id: 2, name: 'announcements', icon: Bell },
@@ -251,6 +91,11 @@ const communities = [
 ]
 
 function App() {
+  const drawerRef = useRef(null)
+  const menuToggleRef = useRef(null)
+  const postsRequestRef = useRef(0)
+  const postPreviewReaderRef = useRef(null)
+  const avatarPreviewReaderRef = useRef(null)
   const [theme, setTheme] = useState(() =>
     localStorage.getItem('cc_theme') === 'dark' ? 'dark' : 'light'
   )
@@ -317,6 +162,36 @@ function App() {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
+  useEffect(() => {
+    if (!isLoggedIn) return undefined
+
+    let active = true
+    api.getMe()
+      .then(({ user }) => {
+        if (!active || !user) return
+        setAuthUser(user)
+        setUserRole(user.role)
+        localStorage.setItem('cc_auth_user', JSON.stringify(user))
+      })
+      .catch((error) => {
+        if (!active) return
+        if (error.status === 401) {
+          localStorage.removeItem('cc_auth_token')
+          localStorage.removeItem('cc_auth_user')
+          disconnectSocket()
+          setAuthUser(null)
+          setIsLoggedIn(false)
+          setAuthError('Your session has expired. Please log in again.')
+          return
+        }
+        console.error('Could not verify the saved session:', error)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [isLoggedIn])
+
   const fetchNotifs = async () => {
     try {
       const data = await api.getNotifications()
@@ -329,28 +204,50 @@ function App() {
 
   // Navigation & Feed state
   const [activePage, setActivePage] = useState('messages')
+  const [personalAIRequest, setPersonalAIRequest] = useState(null)
   const [feedMode, setFeedMode] = useState('learning')
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [posts, setPosts] = useState([])
+  const [postsLoading, setPostsLoading] = useState(false)
+  const [postError, setPostError] = useState('')
+  const [postActionError, setPostActionError] = useState('')
+  const [createPostError, setCreatePostError] = useState('')
+  const [feedReloadKey, setFeedReloadKey] = useState(0)
+  const [postSubmitting, setPostSubmitting] = useState(false)
+  const [newImage, setNewImage] = useState(null)
+  const [newImagePreview, setNewImagePreview] = useState('')
+  const [selectedAvatar, setSelectedAvatar] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+  const [commentSubmitting, setCommentSubmitting] = useState({})
+  const [bioDraftState, setBioDraftState] = useState(() => ({
+    userId: authUser?.id,
+    value: authUser?.bio || '',
+  }))
+  const [bioSaving, setBioSaving] = useState(false)
+  const [bioError, setBioError] = useState('')
+  const [bioSaved, setBioSaved] = useState(false)
 
   // Academic Courses & Resources
-  const [courses, setCourses] = useState(initialCourses)
+  const [courses, setCourses] = useState([])
+  const [coursesLoadError, setCoursesLoadError] = useState('')
+  const [resourceUploading, setResourceUploading] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [showCourseDrawer, setShowCourseDrawer] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
 
   // Teacher Upload Resource Form
   const [newResourceTitle, setNewResourceTitle] = useState('')
-  const [newResourceSubject, setNewResourceSubject] = useState('dsa')
+  const [newResourceSubject, setNewResourceSubject] = useState('')
   const [newResourceType, setNewResourceType] = useState('Notes')
   const [newResourceFile, setNewResourceFile] = useState(null)
 
   // Social & Posts state
-  const [posts, setPosts] = useState(initialPosts)
   const [showCreatePost, setShowCreatePost] = useState(false)
   const [newCaption, setNewCaption] = useState('')
-  const [newImage, setNewImage] = useState('')
   const [commentInputs, setCommentInputs] = useState({})
   const [following, setFollowing] = useState([])
   const [activeChat, setActiveChat] = useState(students[0])
@@ -360,11 +257,171 @@ function App() {
 
   const displayName = authUser?.fullName || fullName.trim() || (userRole === 'FACULTY' ? 'Prof. Ramesh' : 'Aarav Sharma')
 
-  const myAvatar =
-    authUser?.avatarUrl ||
-    (userRole === 'FACULTY'
-      ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
-      : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150')
+  const myAvatar = getFullMediaUrl(authUser?.avatarUrl) || getDefaultAvatar(displayName, userRole)
+
+  const bioDraft = bioDraftState.userId === authUser?.id
+    ? bioDraftState.value
+    : authUser?.bio || ''
+  const setBioDraft = (value) => setBioDraftState({ userId: authUser?.id, value })
+
+  const saveBio = async (event) => {
+    event.preventDefault()
+    setBioSaving(true)
+    setBioError('')
+    setBioSaved(false)
+    try {
+      const { user } = await api.updateProfile({ bio: bioDraft.trim() })
+      const updatedUser = { ...authUser, ...user }
+      setAuthUser(updatedUser)
+      localStorage.setItem('cc_auth_user', JSON.stringify(updatedUser))
+      setBioDraft(user.bio || '')
+      setBioSaved(true)
+    } catch (error) {
+      setBioError(error.message || 'Could not save your bio.')
+    } finally {
+      setBioSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    let active = true
+    const requestId = ++postsRequestRef.current
+
+    if (!isLoggedIn) {
+      Promise.resolve().then(() => {
+        if (active && requestId === postsRequestRef.current) {
+          setPosts([])
+          setPostsLoading(false)
+          setPostError('')
+        }
+      })
+      return () => {
+        active = false
+        postsRequestRef.current += 1
+      }
+    }
+
+    Promise.resolve()
+      .then(() => {
+        if (!active || requestId !== postsRequestRef.current) return null
+        setPostsLoading(true)
+        setPostError('')
+        return api.getPosts()
+      })
+      .then((data) => {
+        if (!data) return
+        if (!Array.isArray(data.posts)) {
+          throw new Error('The server returned an invalid feed response.')
+        }
+        if (active && requestId === postsRequestRef.current) setPosts(data.posts)
+      })
+      .catch((error) => {
+        if (active && requestId === postsRequestRef.current) {
+          setPosts([])
+          setPostError(error.message || 'Could not load posts. Please try again.')
+        }
+      })
+      .finally(() => {
+        if (active && requestId === postsRequestRef.current) setPostsLoading(false)
+      })
+
+    return () => {
+      active = false
+      postsRequestRef.current += 1
+    }
+  }, [isLoggedIn, authUser?.id, feedReloadKey])
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      return undefined
+    }
+    let active = true
+    api.getCourses()
+      .then(({ courses: records }) => {
+        if (!active) return
+        const mappedCourses = (records || []).map((course, index) => ({
+          id: course.id,
+          title: course.name,
+          code: course.code,
+          department: course.department,
+          semester: course.semester,
+          description: '',
+          icon: 'code',
+          status: course.resources?.length ? 'Updated' : 'New',
+          colorScheme: index % 2 ? 'mint' : 'sage',
+          progress: 0,
+          doodle: '',
+          resources: (course.resources || []).map((resource) => ({
+            id: resource.id,
+            title: resource.title,
+            type: resource.category,
+            format: resource.fileFormat,
+            size: resource.fileSize || '',
+            uploadedBy: resource.uploader?.fullName || 'Faculty',
+            date: new Date(resource.createdAt).toLocaleDateString(),
+            fileUrl: resource.fileUrl,
+          })),
+        }))
+        setCourses(mappedCourses)
+        setNewResourceSubject((current) =>
+          mappedCourses.some((course) => course.id === current) ? current : mappedCourses[0]?.id || ''
+        )
+        setCoursesLoadError('')
+      })
+      .catch((error) => {
+        if (active) {
+          console.error('Failed to load academic courses:', error)
+          setCourses([])
+          setCoursesLoadError(error.message || 'Academic resources could not be loaded.')
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [isLoggedIn, authUser?.id])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined
+
+    const menuToggle = menuToggleRef.current
+    const handleResize = () => {
+      if (window.innerWidth > 768) setMobileMenuOpen(false)
+    }
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false)
+        return
+      }
+
+      if (event.key !== 'Tab') return
+      const focusableElements = drawerRef.current?.querySelectorAll(
+        'button:not(:disabled), a[href], input:not(:disabled), [tabindex]:not([tabindex="-1"])'
+      )
+      if (!focusableElements?.length) return
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
+    const previousOverflow = document.body.style.overflow
+
+    document.body.style.overflow = 'hidden'
+    drawerRef.current?.querySelector('.mobile-drawer-close')?.focus()
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('resize', handleResize)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('resize', handleResize)
+      menuToggle?.focus()
+    }
+  }, [mobileMenuOpen])
 
   const navigation = [
     { id: 'messages', label: 'Communication Hub', icon: MessageCircle },
@@ -378,8 +435,19 @@ function App() {
 
   const navigate = (page) => {
     setActivePage(page)
+    if (page !== 'messages') setPersonalAIRequest(null)
     setMobileMenuOpen(false)
   }
+
+  const handleAskPersonalAI = (prompt) => {
+    setPersonalAIRequest((current) => ({ id: (current?.id || 0) + 1, prompt }))
+    setActivePage('messages')
+    setMobileMenuOpen(false)
+  }
+
+  const handlePersonalAIRequestHandled = useCallback(() => {
+    setPersonalAIRequest(null)
+  }, [])
 
   const handleAuth = async (e) => {
     e.preventDefault()
@@ -452,6 +520,7 @@ function App() {
     setAuthUser(null)
     setIsLoggedIn(false)
     setShowQuickSwitchMenu(false)
+    setMobileMenuOpen(false)
   }
 
   const handleMarkAllNotifsRead = async () => {
@@ -464,123 +533,225 @@ function App() {
     }
   }
 
-  const handleTeacherUpload = (e) => {
+  const handleTeacherUpload = async (e) => {
     e.preventDefault()
 
-    if (!newResourceTitle.trim()) {
-      alert('Please enter a title for the resource.')
+    if (!newResourceTitle.trim() || !newResourceSubject || !newResourceFile) {
+      alert('Choose a subject, enter a title, and select a resource file.')
       return
     }
 
-    const newResource = {
-      id: Date.now(),
-      title: newResourceTitle.trim(),
-      type: newResourceType,
-      format: 'PDF',
-      size: '2.5 MB',
-      uploadedBy: `${displayName} (${department})`,
-      date: 'Just now',
+    setResourceUploading(true)
+    try {
+      const { resource } = await api.uploadAcademicResource({
+        title: newResourceTitle.trim(),
+        category: newResourceType,
+        subjectId: newResourceSubject,
+      }, newResourceFile)
+      if (!resource?.id) throw new Error('The server did not confirm the resource upload.')
+      const savedResource = {
+        id: resource.id,
+        title: resource.title,
+        type: resource.category,
+        format: resource.fileFormat,
+        size: resource.fileSize || '',
+        uploadedBy: resource.uploader?.fullName || displayName,
+        date: new Date(resource.createdAt).toLocaleDateString(),
+        fileUrl: resource.fileUrl,
+      }
+      setCourses((prevCourses) => prevCourses.map((course) =>
+        course.id === newResourceSubject
+          ? { ...course, resources: [savedResource, ...course.resources] }
+          : course
+      ))
+      setNewResourceTitle('')
+      setNewResourceFile(null)
+      setShowUploadModal(false)
+      alert(`Resource uploaded successfully to the ${newResourceType} vault.`)
+    } catch (error) {
+      alert(`Resource upload failed: ${error.message}`)
+    } finally {
+      setResourceUploading(false)
     }
-
-    setCourses((prevCourses) =>
-      prevCourses.map((c) =>
-        c.id === newResourceSubject
-          ? { ...c, resources: [newResource, ...c.resources] }
-          : c
-      )
-    )
-
-    alert(`✅ Resource successfully published to ${newResourceType} vault! Students can now access and download it.`)
-
-    setNewResourceTitle('')
-    setNewResourceFile(null)
-    setShowUploadModal(false)
   }
 
-  const toggleLike = (id) => {
-    setPosts((current) =>
-      current.map((post) =>
+  const toggleLike = async (id) => {
+    setPostActionError('')
+    try {
+      const result = await api.toggleLike(id)
+      setPosts((current) => current.map((post) => (
         post.id === id
-          ? {
-              ...post,
-              liked: !post.liked,
-              likes: post.likes + (post.liked ? -1 : 1),
-            }
+          ? { ...post, liked: result.liked, likes: result.likesCount }
           : post
-      )
-    )
+      )))
+    } catch (error) {
+      setPostActionError(error.message || 'Could not update the like. Please try again.')
+    }
   }
 
-  const toggleSave = (id) => {
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === id ? { ...post, saved: !post.saved } : post
-      )
-    )
+  const toggleSave = async (id) => {
+    setPostActionError('')
+    try {
+      const result = await api.toggleSave(id)
+      setPosts((current) => current.map((post) => (
+        post.id === id ? { ...post, saved: result.saved } : post
+      )))
+    } catch (error) {
+      setPostActionError(error.message || 'Could not save the post. Please try again.')
+    }
   }
 
-  const addComment = (id) => {
+  const addComment = async (id) => {
     const text = (commentInputs[id] || '').trim()
-    if (!text) return
+    if (!text || commentSubmitting[id]) return
 
-    setPosts((current) =>
-      current.map((post) =>
+    setPostActionError('')
+    setCommentSubmitting((current) => ({ ...current, [id]: true }))
+    try {
+      const result = await api.addComment(id, text)
+      if (!result.comment) throw new Error('The server did not confirm the comment.')
+      setPosts((current) => current.map((post) => (
         post.id === id
-          ? {
-              ...post,
-              comments: [...post.comments, { user: displayName, text }],
-            }
+          ? { ...post, comments: [...post.comments, result.comment] }
           : post
-      )
-    )
-
-    setCommentInputs((current) => ({ ...current, [id]: '' }))
+      )))
+      setCommentInputs((current) => ({ ...current, [id]: '' }))
+    } catch (error) {
+      setPostActionError(error.message || 'Could not add your comment. Please try again.')
+    } finally {
+      setCommentSubmitting((current) => ({ ...current, [id]: false }))
+    }
   }
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file.')
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setCreatePostError('Choose a JPG, JPEG, PNG, or WebP image.')
+      e.target.value = ''
       return
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      setCreatePostError('Images must be 5 MB or smaller.')
+      e.target.value = ''
+      return
+    }
+
+    setCreatePostError('')
+    setNewImage(file)
+    postPreviewReaderRef.current?.abort()
     const reader = new FileReader()
+    postPreviewReaderRef.current = reader
     reader.onload = () => {
-      setNewImage(String(reader.result))
+      if (postPreviewReaderRef.current === reader) setNewImagePreview(String(reader.result))
+    }
+    reader.onerror = () => {
+      if (postPreviewReaderRef.current === reader) setCreatePostError('Could not preview the selected image.')
     }
     reader.readAsDataURL(file)
   }
 
-  const createPost = (e) => {
+  const createPost = async (e) => {
     e.preventDefault()
 
     if (!newCaption.trim() && !newImage) {
-      alert('Add a caption or an image!')
+      setCreatePostError('Add a caption or select an image to create a post.')
       return
     }
 
-    const post = {
-      id: Date.now(),
-      user: displayName,
-      username: displayName.toLowerCase().replace(/\s+/g, '_'),
-      avatar: myAvatar,
-      location: college || 'College Connect Campus',
-      image: newImage,
-      caption: newCaption.trim(),
-      likes: 0,
-      liked: false,
-      saved: false,
-      time: 'Just now',
-      comments: [],
+    const formData = new FormData()
+    formData.append('caption', newCaption.trim())
+    formData.append('location', college.trim())
+    if (newImage) formData.append('image', newImage)
+
+    setPostSubmitting(true)
+    setCreatePostError('')
+    try {
+      const result = await api.createPost(formData)
+      if (!result.post?.id) throw new Error('The server did not confirm that the post was created.')
+
+      postsRequestRef.current += 1
+      setPosts((current) => [result.post, ...current]
+        .sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt)))
+      setNewCaption('')
+      setNewImage(null)
+      setNewImagePreview('')
+      postPreviewReaderRef.current?.abort()
+      postPreviewReaderRef.current = null
+      setShowCreatePost(false)
+      setFeedMode('social')
+      setActivePage('home')
+      setMobileMenuOpen(false)
+    } catch (error) {
+      setCreatePostError(error.message || 'Could not create your post. Please try again.')
+    } finally {
+      setPostSubmitting(false)
+    }
+  }
+
+  const handleAvatarSelection = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError('Choose a JPG, JPEG, PNG, or WebP image.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Profile pictures must be 5 MB or smaller.')
+      e.target.value = ''
+      return
     }
 
-    setPosts((current) => [post, ...current])
-    setNewCaption('')
-    setNewImage('')
-    setShowCreatePost(false)
-    setFeedMode('social')
+    setAvatarError('')
+    setSelectedAvatar(file)
+    avatarPreviewReaderRef.current?.abort()
+    const reader = new FileReader()
+    avatarPreviewReaderRef.current = reader
+    reader.onload = () => {
+      if (avatarPreviewReaderRef.current === reader) setAvatarPreview(String(reader.result))
+    }
+    reader.onerror = () => {
+      if (avatarPreviewReaderRef.current === reader) setAvatarError('Could not preview the selected image.')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const saveAvatar = async () => {
+    if (!selectedAvatar || !avatarPreview || avatarUploading) return
+
+    setAvatarUploading(true)
+    setAvatarError('')
+    try {
+      const result = await api.uploadAvatar(selectedAvatar)
+      if (!result.user?.avatarUrl) {
+        throw new Error('The server did not confirm the profile picture update.')
+      }
+
+      const updatedUser = { ...authUser, ...result.user }
+      setAuthUser(updatedUser)
+      localStorage.setItem('cc_auth_user', JSON.stringify(updatedUser))
+      setPosts((current) => current.map((post) => ({
+        ...post,
+        ...(post.userId === updatedUser.id ? { avatar: updatedUser.avatarUrl } : {}),
+        comments: post.comments.map((comment) => (
+          comment.userId === updatedUser.id
+            ? { ...comment, avatar: updatedUser.avatarUrl }
+            : comment
+        )),
+      })))
+      setSelectedAvatar(null)
+      setAvatarPreview('')
+      avatarPreviewReaderRef.current?.abort()
+      avatarPreviewReaderRef.current = null
+    } catch (error) {
+      setAvatarError(error.message || 'Could not update your profile picture. Please try again.')
+    } finally {
+      setAvatarUploading(false)
+    }
   }
 
   const sendMessage = (e) => {
@@ -893,8 +1064,33 @@ function App() {
   // ==========================================
   return (
     <div className="app-layout" data-theme={theme}>
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          className="mobile-drawer-backdrop"
+          aria-label="Close navigation menu"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* LEFT NAVIGATION SIDEBAR */}
-      <aside className={`sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+      <aside
+        id="mobile-navigation"
+        className={`sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}
+        ref={drawerRef}
+        role={mobileMenuOpen ? 'dialog' : undefined}
+        aria-modal={mobileMenuOpen || undefined}
+        aria-label="Main navigation"
+      >
+        <button
+          type="button"
+          className="mobile-drawer-close"
+          aria-label="Close navigation menu"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <X size={22} />
+        </button>
+
         <div className="brand" onClick={() => navigate('home')}>
           <img src="/cc-logo.png" alt="College Connect logo" />
           <div>
@@ -918,12 +1114,13 @@ function App() {
 
         <div className="sidebar-section-label">MENU</div>
 
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" aria-label="Primary navigation">
           {navigation.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               className={`nav-item ${activePage === id ? 'active' : ''}`}
               onClick={() => navigate(id)}
+              aria-current={activePage === id ? 'page' : undefined}
             >
               <Icon size={20} />
               <span>{label}</span>
@@ -962,7 +1159,8 @@ function App() {
           <button
             className="icon-button"
             title="Log out"
-            onClick={() => setIsLoggedIn(false)}
+            aria-label="Log out"
+            onClick={handleLogout}
           >
             <LogOut size={18} />
           </button>
@@ -976,7 +1174,11 @@ function App() {
           <div className="header-user-profile">
             <button
               className="icon-button mobile-menu"
+              ref={menuToggleRef}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
             >
               {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -1042,7 +1244,10 @@ function App() {
             ) : (
               <button
                 className="feed-switch-btn"
-                onClick={() => setFeedMode(feedMode === 'learning' ? 'social' : 'learning')}
+                onClick={() => {
+                  setFeedMode(feedMode === 'learning' ? 'social' : 'learning')
+                  navigate('home')
+                }}
                 title="Switch between Learning Vault and Campus Social Feed"
               >
                 {feedMode === 'learning' ? (
@@ -1136,9 +1341,12 @@ function App() {
 
                         <button
                           className="continue-btn"
+                          disabled={!courses.length}
                           onClick={() => {
-                            setSelectedCourse(courses[0])
-                            setShowCourseDrawer(true)
+                            if (courses[0]) {
+                              setSelectedCourse(courses[0])
+                              setShowCourseDrawer(true)
+                            }
                           }}
                         >
                           <span>Continue learning</span>
@@ -1224,6 +1432,10 @@ function App() {
 
                     {/* COURSES CARDS (Horizontal Scroll / Grid) */}
                     <div className="courses-grid-container">
+                      {coursesLoadError && <p className="academic-load-error" role="alert">{coursesLoadError}</p>}
+                      {!courses.length && !coursesLoadError && (
+                        <p className="academic-empty-state">No courses or uploaded resources are available yet.</p>
+                      )}
                       {filteredCourses.map((course) => (
                         <div
                           key={course.id}
@@ -1308,111 +1520,158 @@ function App() {
                       </button>
                     </div>
 
-                    {posts.map((post) => (
-                      <article className="post-card" key={post.id}>
-                        <div className="post-header">
-                          <img src={post.avatar} alt="" className="avatar" />
+                    {postActionError && (
+                      <p className="feed-error" role="alert">{postActionError}</p>
+                    )}
 
-                          <div className="post-author">
-                            <strong>{post.user}</strong>
-                            <span>{post.location} · {post.time}</span>
-                          </div>
-
-                          <MoreHorizontal size={21} />
-                        </div>
-
-                        {post.image && (
-                          <img
-                            src={post.image}
-                            alt="Student post"
-                            className="post-image"
-                          />
-                        )}
-
-                        <div className="post-actions">
-                          <div className="post-actions-left">
-                            <button
-                              className={post.liked ? 'icon-button liked' : 'icon-button'}
-                              onClick={() => toggleLike(post.id)}
-                            >
-                              <Heart size={24} fill={post.liked ? 'currentColor' : 'none'} />
-                            </button>
-
-                            <button
-                              className="icon-button"
-                              onClick={() =>
-                                document.getElementById(`comment-${post.id}`)?.focus()
-                              }
-                            >
-                              <MessageCircle size={24} />
-                            </button>
-
-                            <button
-                              className="icon-button"
-                              onClick={() => {
-                                if (navigator.share) {
-                                  navigator.share({
-                                    title: 'College Connect',
-                                    text: post.caption,
-                                  }).catch(() => {})
-                                } else {
-                                  alert('Share link copied to clipboard!')
-                                }
-                              }}
-                            >
-                              <Send size={22} />
-                            </button>
-                          </div>
-
-                          <button
-                            className="icon-button"
-                            onClick={() => toggleSave(post.id)}
-                          >
-                            <Bookmark
-                              size={22}
-                              fill={post.saved ? 'currentColor' : 'none'}
+                    {postsLoading ? (
+                      <div className="feed-loading" role="status">Loading posts...</div>
+                    ) : postError ? (
+                      <div className="feed-error" role="alert">
+                        <p>{postError}</p>
+                        <button type="button" onClick={() => setFeedReloadKey((key) => key + 1)}>
+                          Try again
+                        </button>
+                      </div>
+                    ) : posts.length === 0 ? (
+                      <div className="feed-empty-state">
+                        <Camera size={36} />
+                        <p>No campus posts yet. Be the first to share a moment.</p>
+                      </div>
+                    ) : (
+                      posts.map((post) => (
+                        <article className="post-card" key={post.id}>
+                          <div className="post-header">
+                            <img
+                              src={getFullMediaUrl(post.avatar) || getDefaultAvatar(post.user, post.userRole)}
+                              alt={`${post.user}'s profile`}
+                              className="avatar"
                             />
-                          </button>
-                        </div>
 
-                        <div className="post-details">
-                          <strong>{post.likes.toLocaleString()} likes</strong>
-                          <p>
-                            <strong>{post.username}</strong> {post.caption}
-                          </p>
-                          <span className="comment-count">
-                            {post.comments.length} comments
-                          </span>
+                            <div className="post-author">
+                              <strong>{post.user}</strong>
+                              <small>@{post.username}</small>
+                              <span>
+                                {post.location} ·{' '}
+                                <time dateTime={post.createdAt}>
+                                  {post.createdAt ? new Date(post.createdAt).toLocaleString() : post.time}
+                                </time>
+                              </span>
+                            </div>
 
-                          {post.comments.map((comment, index) => (
-                            <p className="comment-line" key={index}>
-                              <strong>{comment.user}</strong> {comment.text}
-                            </p>
-                          ))}
-                        </div>
+                            <MoreHorizontal size={21} aria-hidden="true" />
+                          </div>
 
-                        <form
-                          className="comment-form"
-                          onSubmit={(e) => {
-                            e.preventDefault()
-                            addComment(post.id)
-                          }}
-                        >
-                          <input
-                            id={`comment-${post.id}`}
-                            placeholder="Add a comment..."
-                            value={commentInputs[post.id] || ''}
-                            onChange={(e) =>
-                              setCommentInputs((curr) => ({
-                                ...curr,
-                                [post.id]: e.target.value,
-                              }))
-                            }
-                          />
-                          <button type="submit">Post</button>
-                        </form>
-                      </article>
-                    ))}
+                          {post.image && (
+                            <img
+                              src={getFullMediaUrl(post.image)}
+                              alt={`Photo shared by ${post.user}`}
+                              className="post-image"
+                            />
+                          )}
+
+                          <div className="post-actions">
+                            <div className="post-actions-left">
+                              <button
+                                type="button"
+                                className={post.liked ? 'icon-button liked' : 'icon-button'}
+                                onClick={() => toggleLike(post.id)}
+                                aria-label={post.liked ? 'Unlike post' : 'Like post'}
+                                aria-pressed={post.liked}
+                              >
+                                <Heart size={24} fill={post.liked ? 'currentColor' : 'none'} />
+                              </button>
+
+                              <button
+                                type="button"
+                                className="icon-button"
+                                onClick={() => document.getElementById(`comment-${post.id}`)?.focus()}
+                                aria-label="Write a comment"
+                              >
+                                <MessageCircle size={24} />
+                              </button>
+
+                              <button
+                                type="button"
+                                className="icon-button"
+                                onClick={() => {
+                                  if (navigator.share) {
+                                    navigator.share({
+                                      title: 'College Connect',
+                                      text: post.caption,
+                                    }).catch(() => {})
+                                  } else {
+                                    alert('Sharing is not supported in this browser.')
+                                  }
+                                }}
+                                aria-label="Share post"
+                              >
+                                <Send size={22} />
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="icon-button"
+                              onClick={() => toggleSave(post.id)}
+                              aria-label={post.saved ? 'Unsave post' : 'Save post'}
+                              aria-pressed={post.saved}
+                            >
+                              <Bookmark
+                                size={22}
+                                fill={post.saved ? 'currentColor' : 'none'}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="post-details">
+                            <strong>{Number(post.likes || 0).toLocaleString()} likes</strong>
+                            {post.caption && (
+                              <p>
+                                <strong>@{post.username}</strong> {post.caption}
+                              </p>
+                            )}
+                            <span className="comment-count">
+                              {post.comments.length} comments
+                            </span>
+
+                            {post.comments.map((comment) => (
+                              <div className="comment-line" key={comment.id}>
+                                <img
+                                  src={getFullMediaUrl(comment.avatar) || getDefaultAvatar(comment.user, comment.userRole)}
+                                  alt=""
+                                  className="comment-avatar"
+                                />
+                                <p><strong>{comment.user}</strong> {comment.text}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <form
+                            className="comment-form"
+                            onSubmit={(e) => {
+                              e.preventDefault()
+                              addComment(post.id)
+                            }}
+                          >
+                            <input
+                              id={`comment-${post.id}`}
+                              placeholder="Add a comment..."
+                              value={commentInputs[post.id] || ''}
+                              onChange={(e) =>
+                                setCommentInputs((curr) => ({
+                                  ...curr,
+                                  [post.id]: e.target.value,
+                                }))
+                              }
+                            />
+                            <button type="submit" disabled={!commentInputs[post.id]?.trim() || commentSubmitting[post.id]}>
+                              {commentSubmitting[post.id] ? 'Posting...' : 'Post'}
+                            </button>
+                          </form>
+                        </article>
+                      ))
+                    )}
                   </div>
                 )}
               </>
@@ -1479,15 +1738,18 @@ function App() {
                               </span>
                             </div>
 
-                            <button
+                            <a
                               className="download-pill-btn"
-                              onClick={() =>
-                                alert(`Downloading: ${res.title}\nFormat: ${res.format}\nVerified source.`)
-                              }
+                              href={getFullMediaUrl(res.fileUrl)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => api.recordResourceDownload(res.id).catch((error) => {
+                                console.error('Could not record resource download:', error)
+                              })}
                             >
                               <Download size={14} />
                               <span>Download</span>
-                            </button>
+                            </a>
                           </div>
                         ))}
                       </div>
@@ -1551,6 +1813,9 @@ function App() {
                   setAuthUser(updated)
                   localStorage.setItem('cc_auth_user', JSON.stringify(updated))
                 }}
+                personalAIRequest={personalAIRequest}
+                onAskPersonalAI={handleAskPersonalAI}
+                onPersonalAIRequestHandled={handlePersonalAIRequestHandled}
               />
             )}
 
@@ -1620,41 +1885,34 @@ function App() {
 
             {/* COMMUNITIES TAB */}
             {activePage === 'communities' && (
-              <div className="page-panel">
-                <h2>Campus Communities 🎓</h2>
-                <p>Discord-inspired community channels for your college.</p>
-
-                <div className="community-list">
-                  {communities.map((channel) => (
-                    <button
-                      key={channel.id}
-                      className={`community-item ${
-                        activeChannel === channel.name ? 'selected' : ''
-                      }`}
-                      onClick={() => setActiveChannel(channel.name)}
-                    >
-                      <Hash size={20} />
-                      <div>
-                        <strong>{channel.name}</strong>
-                        <small>College Connect community</small>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="channel-preview">
-                  <Hash size={36} />
-                  <h3>Welcome to #{activeChannel}</h3>
-                  <p>Channel conversations & student discussions.</p>
-                </div>
-              </div>
+              <CommunityChannels
+                currentUser={authUser}
+                selectedChannel={activeChannel}
+                onSelectChannel={setActiveChannel}
+                onAskPersonalAI={handleAskPersonalAI}
+              />
             )}
 
             {/* PROFILE TAB */}
             {activePage === 'profile' && (
               <div className="page-panel">
                 <div className="profile-header">
-                  <img src={myAvatar} alt="" />
+                  <div className="profile-avatar-editor">
+                    <img src={avatarPreview || myAvatar} alt={`${displayName}'s profile`} />
+                    <label className="avatar-change-button">
+                      <Camera size={16} />
+                      <span>Change picture</span>
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        onChange={handleAvatarSelection}
+                        onClick={(event) => {
+                          event.currentTarget.value = ''
+                        }}
+                        disabled={avatarUploading}
+                      />
+                    </label>
+                  </div>
 
                   <div>
                     <h2>{displayName}</h2>
@@ -1672,6 +1930,57 @@ function App() {
                     </div>
                   </div>
                 </div>
+
+                {avatarError && <p className="profile-avatar-error" role="alert">{avatarError}</p>}
+                <form className="profile-bio-editor" onSubmit={saveBio}>
+                  <label htmlFor="profile-bio">About you</label>
+                  <textarea
+                    id="profile-bio"
+                    value={bioDraft}
+                    onChange={(event) => {
+                      setBioDraft(event.target.value)
+                      setBioSaved(false)
+                    }}
+                    maxLength={500}
+                    rows={3}
+                    placeholder="Share a little about yourself..."
+                  />
+                  <div className="profile-bio-actions">
+                    <small>{bioDraft.length}/500</small>
+                    <button type="submit" className="primary-button" disabled={bioSaving}>
+                      {bioSaving ? 'Saving...' : 'Save bio'}
+                    </button>
+                  </div>
+                  {bioError && <p className="profile-avatar-error" role="alert">{bioError}</p>}
+                  {bioSaved && <p className="profile-bio-saved" role="status">Bio saved.</p>}
+                </form>
+                {selectedAvatar && (
+                  <div className="avatar-save-actions">
+                    <span>Preview your new profile picture before saving.</span>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={saveAvatar}
+                      disabled={avatarUploading || !avatarPreview}
+                    >
+                      {avatarUploading ? 'Saving...' : 'Save picture'}
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => {
+                        setSelectedAvatar(null)
+                        setAvatarError('')
+                        setAvatarPreview('')
+                        avatarPreviewReaderRef.current?.abort()
+                        avatarPreviewReaderRef.current = null
+                      }}
+                      disabled={avatarUploading}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
 
                 <h3>Your Shared Moments</h3>
                 <div className="empty-state">
@@ -1714,13 +2023,13 @@ function App() {
                   <span>{college}</span>
                 </div>
 
-                <button
-                  className="logout-button"
-                  onClick={() => setIsLoggedIn(false)}
-                >
-                  <LogOut size={18} />
-                  Log Out
-                </button>
+              <button
+                className="logout-button"
+                onClick={handleLogout}
+              >
+                <LogOut size={18} />
+                Log Out
+              </button>
               </div>
             )}
           </main>
@@ -1863,6 +2172,8 @@ function App() {
                 <label>Subject</label>
                 <select
                   value={newResourceSubject}
+                  required
+                  disabled={!courses.length}
                   onChange={(e) => setNewResourceSubject(e.target.value)}
                 >
                   {courses.map((c) => (
@@ -1920,8 +2231,8 @@ function App() {
                 </span>
               </div>
 
-              <button type="submit" className="primary-button full-width">
-                Publish to Campus Vault
+              <button type="submit" className="primary-button full-width" disabled={resourceUploading || !courses.length}>
+                {resourceUploading ? 'Uploading...' : 'Publish to Campus Vault'}
               </button>
             </form>
           </div>
@@ -1985,15 +2296,18 @@ function App() {
                       </p>
                     </div>
 
-                    <button
+                    <a
                       className="download-file-btn"
-                      onClick={() =>
-                        alert(`Starting download for: ${res.title}\nVerified by College Connect Faculty.`)
-                      }
+                      href={getFullMediaUrl(res.fileUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => api.recordResourceDownload(res.id).catch((error) => {
+                        console.error('Could not record resource download:', error)
+                      })}
                     >
                       <Download size={16} />
                       <span>Download</span>
-                    </button>
+                    </a>
                   </div>
                 ))}
               </div>
@@ -2037,27 +2351,33 @@ function App() {
                 rows={4}
               />
 
-              {newImage && (
+              {newImagePreview && (
                 <img
-                  src={newImage}
+                  src={newImagePreview}
                   alt="Upload preview"
                   className="upload-preview"
                 />
               )}
 
+              {createPostError && <p className="profile-avatar-error" role="alert">{createPostError}</p>}
+
               <label className="upload-label">
                 <ImageIcon size={21} />
-                Add Photo
+                {newImage ? 'Change Photo' : 'Add Photo'}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                   onChange={handleImageUpload}
+                  onClick={(event) => {
+                    event.currentTarget.value = ''
+                  }}
                   hidden
+                  disabled={postSubmitting}
                 />
               </label>
 
-              <button type="submit" className="primary-button">
-                Share Post
+              <button type="submit" className="primary-button" disabled={postSubmitting}>
+                {postSubmitting ? 'Sharing...' : 'Share Post'}
               </button>
             </form>
           </div>

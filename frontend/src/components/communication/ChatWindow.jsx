@@ -23,8 +23,10 @@ import {
   Sparkles,
   Shield,
   MessageCircleMore,
+  Mic,
+  Square,
 } from 'lucide-react'
-import { api } from '../../services/api'
+import { api, getDefaultAvatar, getFullMediaUrl } from '../../services/api'
 import { MESSAGE_TAGS } from './messageTags'
 import FreeToTalkModerationPanel from './FreeToTalkModerationPanel'
 import FreeToTalkAppeals from './FreeToTalkAppeals'
@@ -41,6 +43,8 @@ export default function ChatWindow({
   onOpenGroupInfo,
   onOpenReportModal,
   onConversationUpdated,
+  focusComposerOnOpen = false,
+  onAskPersonalAI,
 }) {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
@@ -49,6 +53,7 @@ export default function ChatWindow({
   const [queryCategory, setQueryCategory] = useState('')
   const [stagedFiles, setStagedFiles] = useState([])
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false)
   const [editingMessageId, setEditingMessageId] = useState(null)
   const [editingContent, setEditingContent] = useState('')
   const [typingUser, setTypingUser] = useState(null)
@@ -87,6 +92,10 @@ export default function ChatWindow({
 
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
+  const composerInputRef = useRef(null)
+  const voiceRecorderRef = useRef(null)
+  const voiceStreamRef = useRef(null)
+  const voiceRecordingTimerRef = useRef(null)
   const typingTimeoutRef = useRef(null)
   const fetchRequestRef = useRef(0)
   const tagCountRequestRef = useRef(0)
@@ -164,6 +173,20 @@ export default function ChatWindow({
       leaveConversationRoom(conversation.id)
     }
   }, [conversation.id, policyAccepted])
+
+  useEffect(() => {
+    if (!focusComposerOnOpen || !window.matchMedia('(max-width: 768px)').matches) return undefined
+    const focusFrame = window.requestAnimationFrame(() => {
+      composerInputRef.current?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(focusFrame)
+  }, [conversation.id, focusComposerOnOpen])
+
+  useEffect(() => () => {
+    if (voiceRecordingTimerRef.current) clearTimeout(voiceRecordingTimerRef.current)
+    if (voiceRecorderRef.current?.state === 'recording') voiceRecorderRef.current.stop()
+    voiceStreamRef.current?.getTracks().forEach((track) => track.stop())
+  }, [])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -341,9 +364,7 @@ export default function ChatWindow({
     }, 2000)
   }
 
-  // File Upload
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0]
+  const stageAttachment = async (file) => {
     if (!file) return
 
     setUploadingFile(true)
@@ -354,7 +375,76 @@ export default function ChatWindow({
       alert(`File upload failed: ${err.message}`)
     } finally {
       setUploadingFile(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  // File Upload
+  const handleFileUpload = async (e) => {
+    await stageAttachment(e.target.files?.[0])
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const toggleVoiceRecording = async () => {
+    if (isRecordingVoice) {
+      if (voiceRecordingTimerRef.current) clearTimeout(voiceRecordingTimerRef.current)
+      if (voiceRecorderRef.current?.state === 'recording') voiceRecorderRef.current.stop()
+      setIsRecordingVoice(false)
+      return
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setMessageError('Voice recording is not supported by this browser.')
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      voiceStreamRef.current = stream
+      const supportedMimeType = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/ogg',
+      ].find((mimeType) => MediaRecorder.isTypeSupported(mimeType))
+      const recorder = new MediaRecorder(stream, supportedMimeType ? { mimeType: supportedMimeType } : undefined)
+      const chunks = []
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data)
+      }
+      recorder.onerror = () => {
+        setMessageError('Voice recording failed. Please try again.')
+        stream.getTracks().forEach((track) => track.stop())
+        voiceStreamRef.current = null
+        setIsRecordingVoice(false)
+      }
+      recorder.onstop = async () => {
+        if (voiceRecordingTimerRef.current) clearTimeout(voiceRecordingTimerRef.current)
+        stream.getTracks().forEach((track) => track.stop())
+        voiceStreamRef.current = null
+        voiceRecorderRef.current = null
+        if (!chunks.length) return
+        const mimeType = recorder.mimeType || 'audio/webm'
+        const extension = mimeType.includes('ogg') ? 'ogg' : 'webm'
+        const voiceNote = new File(chunks, `voice-note-${Date.now()}.${extension}`, { type: mimeType })
+        setMessageError('')
+        await stageAttachment(voiceNote)
+      }
+      voiceRecorderRef.current = recorder
+      recorder.start()
+      setMessageError('')
+      setIsRecordingVoice(true)
+      voiceRecordingTimerRef.current = setTimeout(() => {
+        if (recorder.state === 'recording') {
+          recorder.stop()
+          setIsRecordingVoice(false)
+        }
+      }, 120000)
+    } catch (error) {
+      setMessageError(error.name === 'NotAllowedError'
+        ? 'Allow microphone access in your browser to record a voice note.'
+        : error.message || 'Could not start voice recording.')
+      voiceStreamRef.current?.getTracks().forEach((track) => track.stop())
+      voiceStreamRef.current = null
     }
   }
 
@@ -365,6 +455,26 @@ export default function ChatWindow({
   // Send Message
   const handleSendMessage = async (e) => {
     e?.preventDefault()
+    const aiRequest = inputText.trim().match(/@ai\b\s*[-,:]?\s*([\s\S]*)$/i)
+    if (aiRequest) {
+      const prompt = aiRequest[1].trim()
+      if (!prompt) {
+        setMessageError('Type your question after @AI to ask privately.')
+        return
+      }
+      if (stagedFiles.length > 0) {
+        setMessageError('Attachments are not sent to Personal AI. Remove them or send your message to the chat instead.')
+        return
+      }
+      setInputText('')
+      setCursorPosition(0)
+      setMessageError('')
+      setShowEmojiPicker(false)
+      setSuggestionsDismissed(false)
+      emitTypingStop(conversation.id)
+      onAskPersonalAI?.(prompt)
+      return
+    }
     if ((!inputText.trim() && stagedFiles.length === 0) || !canSend ||
       !policyAccepted || invalidDraftTags.length > 0 ||
       (isFreeToTalk && conversation.myMembership?.messagingRestrictedUntil &&
@@ -576,7 +686,11 @@ export default function ChatWindow({
           <div className="cc-header-avatar-box">
             {isDirect ? (
               <>
-                <img src={otherMember?.avatarUrl} alt="" className="cc-avatar-md" />
+                <img
+                  src={getFullMediaUrl(otherMember?.avatarUrl) || getDefaultAvatar(otherMember?.fullName, otherMember?.role)}
+                  alt={`${otherMember?.fullName || 'User'}'s profile`}
+                  className="cc-avatar-md"
+                />
                 <span className={`cc-status-dot ${otherMember?.status === 'ONLINE' ? 'online' : 'offline'}`} />
               </>
             ) : (
@@ -830,7 +944,7 @@ export default function ChatWindow({
                 {/* Avatar for others in group */}
                 {isOther && !isDirect && !isFreeToTalk && (
                   <img
-                    src={sender?.avatarUrl}
+                    src={getFullMediaUrl(sender?.avatarUrl) || getDefaultAvatar(sender?.fullName, sender?.role)}
                     alt=""
                     className="cc-msg-avatar"
                     title={sender?.fullName}
@@ -900,22 +1014,41 @@ export default function ChatWindow({
                         {msg.attachments && msg.attachments.length > 0 && (
                           <div className="cc-message-attachments">
                             {msg.attachments.map((att) => (
-                              <div key={att.id} className="cc-attachment-card">
-                                <FileText size={24} className="text-emerald-400" />
-                                <div className="cc-att-info">
-                                  <strong>{att.fileName}</strong>
-                                  <small>{att.fileSize || att.fileType}</small>
-                                </div>
+                              att.fileType === 'IMAGE' ? (
                                 <a
-                                  href={`http://localhost:5000${att.fileUrl}`}
+                                  key={att.id}
+                                  href={getFullMediaUrl(att.fileUrl)}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="cc-icon-btn cc-btn-download"
-                                  title="Download / View"
+                                  className="cc-message-image-link"
                                 >
-                                  <Download size={16} />
+                                  <img src={getFullMediaUrl(att.fileUrl)} alt={att.fileName} className="cc-message-image" />
                                 </a>
-                              </div>
+                              ) : att.fileType === 'AUDIO' ? (
+                                <div key={att.id} className="cc-audio-attachment">
+                                  <strong>{att.fileName}</strong>
+                                  <audio controls preload="metadata" src={getFullMediaUrl(att.fileUrl)}>
+                                    Your browser does not support audio playback.
+                                  </audio>
+                                </div>
+                              ) : (
+                                <div key={att.id} className="cc-attachment-card">
+                                  <FileText size={24} className="text-emerald-400" />
+                                  <div className="cc-att-info">
+                                    <strong>{att.fileName}</strong>
+                                    <small>{att.fileSize || att.fileType}</small>
+                                  </div>
+                                  <a
+                                    href={getFullMediaUrl(att.fileUrl)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="cc-icon-btn cc-btn-download"
+                                    title="Download / View"
+                                  >
+                                    <Download size={16} />
+                                  </a>
+                                </div>
+                              )
                             ))}
                           </div>
                         )}
@@ -1147,7 +1280,7 @@ export default function ChatWindow({
               ref={fileInputRef}
               onChange={handleFileUpload}
               style={{ display: 'none' }}
-              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip,.webm,.ogg,.mp3,.wav,.m4a,audio/*"
             />
 
             {!isFreeToTalk && <button
@@ -1160,6 +1293,19 @@ export default function ChatWindow({
               <Paperclip size={18} />
             </button>}
 
+            {!isFreeToTalk && (
+              <button
+                type="button"
+                className={`cc-composer-btn ${isRecordingVoice ? 'active cc-recording-voice' : ''}`}
+                title={isRecordingVoice ? 'Stop recording voice note' : 'Record a voice note'}
+                aria-label={isRecordingVoice ? 'Stop recording voice note' : 'Record a voice note'}
+                onClick={toggleVoiceRecording}
+                disabled={uploadingFile}
+              >
+                {isRecordingVoice ? <Square size={17} /> : <Mic size={18} />}
+              </button>
+            )}
+
             <button
               type="button"
               className={`cc-composer-btn ${showEmojiPicker ? 'active' : ''}`}
@@ -1170,12 +1316,13 @@ export default function ChatWindow({
             </button>
 
             <textarea
+              ref={composerInputRef}
               className="cc-composer-input"
               placeholder={isFreeToTalk
                 ? 'Speak freely... Type # for a topic tag (Enter to send)'
                 : isStudentToFaculty
-                  ? 'Ask your professor... Type # for tags or @ to mention (Enter to send)'
-                  : 'Type a message... Type # for tags or @ to mention (Enter to send)'}
+                  ? 'Ask your professor... Type @AI for a private answer'
+                  : 'Type a message... Type @AI for a private answer'}
               value={inputText}
               onChange={handleInputChange}
               onSelect={(e) => setCursorPosition(e.target.selectionStart)}
@@ -1212,13 +1359,14 @@ export default function ChatWindow({
             <button
               type="submit"
               className="cc-send-btn"
-              disabled={(!inputText.trim() && stagedFiles.length === 0) ||
+              disabled={(!inputText.trim() && stagedFiles.length === 0) || uploadingFile || isRecordingVoice ||
                 (isFreeToTalk && conversation.myMembership?.messagingRestrictedUntil &&
                   new Date(conversation.myMembership.messagingRestrictedUntil) > new Date())}
             >
               <Send size={18} />
             </button>
           </form>
+          {messageError && <p className="cc-composer-error" role="alert">{messageError}</p>}
 
         </div>
       )}

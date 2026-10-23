@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Users, UserPlus, Shield, LogOut, Check, Search } from 'lucide-react'
-import { api } from '../../services/api'
+import { api, getDefaultAvatar, getFullMediaUrl } from '../../services/api'
 
 export default function GroupInfoModal({ conversation, currentUser, onClose, onUpdate }) {
   const [showAddMembers, setShowAddMembers] = useState(false)
@@ -116,7 +116,11 @@ export default function GroupInfoModal({ conversation, currentUser, onClose, onU
                         className={`cc-member-select-item ${isSelected ? 'selected' : ''}`}
                         onClick={() => toggleSelectUser(u.id)}
                       >
-                        <img src={u.avatarUrl} alt="" className="cc-avatar-sm" />
+                        <img
+                          src={getFullMediaUrl(u.avatarUrl) || getDefaultAvatar(u.fullName, u.role)}
+                          alt={`${u.fullName}'s profile`}
+                          className="cc-avatar-sm"
+                        />
                         <div className="cc-member-info">
                           <strong>{u.fullName}</strong>
                           <span className={`cc-role-badge ${u.role === 'FACULTY' ? 'badge-faculty' : 'badge-student'}`}>
@@ -155,7 +159,11 @@ export default function GroupInfoModal({ conversation, currentUser, onClose, onU
           <div className="cc-members-scroll">
             {members.map((m) => (
               <div key={m.id} className="cc-member-row">
-                <img src={m.avatarUrl} alt="" className="cc-avatar-sm" />
+                <img
+                  src={getFullMediaUrl(m.avatarUrl) || getDefaultAvatar(m.fullName, m.role)}
+                  alt={`${m.fullName}'s profile`}
+                  className="cc-avatar-sm"
+                />
                 <div className="cc-member-details">
                   <div className="cc-member-name-row">
                     <strong>{m.fullName}</strong>

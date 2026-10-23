@@ -1,8 +1,9 @@
 import { Router } from 'express'
+import fs from 'fs/promises'
 import path from 'path'
 import prisma from '../config/prisma.js'
 import { authenticate } from '../middleware/auth.js'
-import { uploadMiddleware } from '../middleware/upload.js'
+import { isSupportedImageUpload, uploadMiddleware } from '../middleware/upload.js'
 import { MESSAGE_TAGS, normalizeMessageTags } from '../constants/messageTags.js'
 import { config } from '../config/env.js'
 import {
@@ -112,6 +113,7 @@ router.use(authenticate)
 // Helper to determine attachment file type
 const getAttachmentType = (mimeType, originalName) => {
   const ext = path.extname(originalName).toLowerCase()
+  if (mimeType.startsWith('audio/')) return 'AUDIO'
   if (mimeType.startsWith('image/')) return 'IMAGE'
   if (ext === '.pdf' || mimeType.includes('pdf')) return 'PDF'
   if (['.doc', '.docx', '.txt', '.ppt', '.pptx', '.xls', '.xlsx'].includes(ext)) return 'DOC'
@@ -1410,10 +1412,15 @@ router.post('/conversations/:id/read', async (req, res, next) => {
 // -------------------------------------------------------------
 // 13. FILE ATTACHMENT UPLOAD
 // -------------------------------------------------------------
-router.post('/upload', uploadMiddleware.single('file'), (req, res, next) => {
+router.post('/upload', uploadMiddleware.single('file'), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file provided.' })
+    }
+
+    if (/\.(jpe?g|png|webp)$/i.test(req.file.originalname) && !isSupportedImageUpload(req.file)) {
+      await fs.unlink(req.file.path)
+      return res.status(400).json({ error: 'The uploaded image content does not match its file type.' })
     }
 
     const fileUrl = `/uploads/${req.file.filename}`

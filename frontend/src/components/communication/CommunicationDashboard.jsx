@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Shield,
   CheckCircle,
+  Sparkles,
 } from 'lucide-react'
 import ConversationList from './ConversationList'
 import ChatWindow from './ChatWindow'
@@ -22,13 +23,21 @@ import CommunicationSettings from './CommunicationSettings'
 import CreateGroupModal from './CreateGroupModal'
 import GroupInfoModal from './GroupInfoModal'
 import ReportModal from './ReportModal'
+import PersonalAI from './PersonalAI'
 import { api } from '../../services/api'
 import { getSocket, connectSocket } from '../../services/socket'
 
-export default function CommunicationDashboard({ currentUser, onProfileUpdated }) {
+export default function CommunicationDashboard({
+  currentUser,
+  onProfileUpdated,
+  personalAIRequest,
+  onAskPersonalAI,
+  onPersonalAIRequestHandled,
+}) {
   // Navigation tabs in the Communication Module
   // 'CHATS' | 'FACULTY_DIR' | 'STUDENT_DIR' | 'ANNOUNCEMENTS' | 'WHISPER' | 'SETTINGS'
-  const [activeTab, setActiveTab] = useState('CHATS')
+  const [activeTab, setActiveTab] = useState(() => personalAIRequest ? 'PERSONAL_AI' : 'CHATS')
+  const [aiRequest, setAiRequest] = useState(personalAIRequest)
 
   // Conversations state
   const [conversations, setConversations] = useState([])
@@ -147,6 +156,18 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
     setMobileChatOpen(false)
   }
 
+  const openPersonalAI = () => {
+    setActiveTab('PERSONAL_AI')
+    setMobileChatOpen(false)
+  }
+
+  const handleAskPersonalAI = (prompt) => {
+    setAiRequest((current) => ({ id: (current?.id || 0) + 1, prompt }))
+    setActiveTab('PERSONAL_AI')
+    setMobileChatOpen(false)
+    onAskPersonalAI?.(prompt)
+  }
+
   const handleStartConversationFromDirectory = (conv) => {
     setActiveConversation(conv)
     setActiveTab('CHATS')
@@ -195,7 +216,7 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
   )
 
   return (
-    <div className="cc-comm-dashboard">
+    <div className={`cc-comm-dashboard ${mobileChatOpen ? 'cc-mobile-chat-open' : ''}`}>
       {/* 1. LEFT SUB-NAVBAR (MICROSOFT TEAMS STYLE BAR) */}
       <nav className="cc-comm-subnav">
         <button
@@ -210,6 +231,17 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
             )}
           </div>
           <span>Chats</span>
+        </button>
+
+        <button
+          className={`cc-subnav-item ${activeTab === 'PERSONAL_AI' ? 'active' : ''}`}
+          onClick={() => openPersonalAI()}
+          title="Personal AI"
+        >
+          <div className="cc-subnav-icon-wrap">
+            <Sparkles size={20} />
+          </div>
+          <span>Personal AI</span>
         </button>
 
         <button
@@ -313,6 +345,8 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
                     isFreeToTalk: activeConversation.isFreeToTalk,
                   })}
                   onConversationUpdated={() => fetchConversations(activeConversation.id)}
+                  focusComposerOnOpen={mobileChatOpen}
+                  onAskPersonalAI={handleAskPersonalAI}
                 />
               ) : (
                 <div className="cc-no-active-chat">
@@ -354,6 +388,7 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
                     isFreeToTalk: true,
                   })}
                   onConversationUpdated={() => fetchConversations(activeConversation.id)}
+                  onAskPersonalAI={handleAskPersonalAI}
                 />
               </div>
             ) : null}
@@ -364,6 +399,13 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
           <FacultyDirectory
             currentUser={currentUser}
             onStartConversation={handleStartConversationFromDirectory}
+          />
+        )}
+
+        {activeTab === 'PERSONAL_AI' && (
+          <PersonalAI
+            request={aiRequest}
+            onRequestHandled={onPersonalAIRequestHandled}
           />
         )}
 
