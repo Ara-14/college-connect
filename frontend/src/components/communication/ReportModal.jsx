@@ -2,20 +2,22 @@ import { useState } from 'react'
 import { AlertTriangle, X, Check } from 'lucide-react'
 import { api } from '../../services/api'
 
-export default function ReportModal({ message, onClose, onReportSuccess }) {
-  const [reason, setReason] = useState('Inappropriate Content')
+export default function ReportModal({ message, isAnonymous = false, onClose, onReportSuccess }) {
+  const [reason, setReason] = useState('INAPPROPRIATE_CONTENT')
   const [details, setDetails] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
   const reasons = [
-    'Inappropriate Content',
-    'Harassment or Bullying',
-    'Spam or Commercial Promotion',
-    'Academic Dishonesty / Cheating',
-    'Hate Speech or Discrimination',
-    'Other',
+    { value: 'HARASSMENT', label: 'Harassment, bullying, or hate speech' },
+    { value: 'SPAM', label: 'Spam or malicious links' },
+    { value: 'THREATS', label: 'Threats or credible safety concern' },
+    { value: 'PERSONAL_INFORMATION', label: 'Personal information or doxxing' },
+    { value: 'INAPPROPRIATE_CONTENT', label: 'Inappropriate content' },
+    { value: 'ACADEMIC_INTEGRITY', label: 'Cheating or confidential exam material' },
+    { value: 'RETALIATION', label: 'Retaliation against a reporter' },
+    { value: 'OTHER', label: 'Other safety concern' },
   ]
 
   const handleSubmit = async (e) => {
@@ -24,8 +26,7 @@ export default function ReportModal({ message, onClose, onReportSuccess }) {
     setError('')
 
     try {
-      const fullReason = details.trim() ? `${reason}: ${details.trim()}` : reason
-      await api.reportMessage(message.id, fullReason)
+      await api.reportMessage(message.id, reason, details.trim())
       setSubmitted(true)
       setTimeout(() => {
         onReportSuccess?.()
@@ -57,16 +58,16 @@ export default function ReportModal({ message, onClose, onReportSuccess }) {
               <Check size={28} />
             </div>
             <h4>Report Submitted</h4>
-            <p>Thank you. This message has been flagged for departmental administration review.</p>
+            <p>Thank you. Your confidential report has been submitted to authorized moderators.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="cc-modal-form">
             <p className="cc-modal-desc">
-              Help keep our college community safe and respectful. Reports are confidential and reviewed by faculty administrators.
+              Reports are confidential. Share only the context needed for authorized moderators to review this message.
             </p>
 
             <div className="cc-reported-quote">
-              <span className="cc-quote-author">{message.sender?.fullName || 'User'}:</span>
+              {!isAnonymous && <span className="cc-quote-author">{message.sender?.fullName || 'User'}:</span>}
               <p>{message.content}</p>
             </div>
 
@@ -74,8 +75,8 @@ export default function ReportModal({ message, onClose, onReportSuccess }) {
               <label>Reason for report</label>
               <select value={reason} onChange={(e) => setReason(e.target.value)} className="cc-input">
                 {reasons.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
+                  <option key={r.value} value={r.value}>
+                    {r.label}
                   </option>
                 ))}
               </select>

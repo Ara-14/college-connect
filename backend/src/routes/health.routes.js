@@ -5,9 +5,10 @@ const router = Router()
 
 router.get('/', async (req, res) => {
   const dbStatus = await checkDatabaseConnection()
+  const statusCode = dbStatus.connected ? 200 : 503
 
-  res.status(200).json({
-    status: 'ok',
+  res.status(statusCode).json({
+    status: dbStatus.connected ? 'ok' : 'degraded',
     service: 'College Connect API',
     timestamp: new Date().toISOString(),
     uptime: `${Math.floor(process.uptime())} seconds`,

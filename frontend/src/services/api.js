@@ -18,7 +18,7 @@ const handleResponse = async (response) => {
     let errorMsg = 'An error occurred'
     try {
       const errorData = await response.json()
-      errorMsg = errorData.error || errorMsg
+      errorMsg = errorData.error || errorData.message || errorMsg
     } catch (e) {
       errorMsg = response.statusText || errorMsg
     }
@@ -130,6 +130,110 @@ export const api = {
     return handleResponse(res)
   },
 
+  async getMessageTagCounts(conversationId) {
+    const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/message-tag-counts`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async acceptFreeToTalkPolicy(conversationId) {
+    const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/free-to-talk/accept-policy`, {
+      method: 'POST',
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async getFreeToTalkReports(conversationId) {
+    const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/free-to-talk/reports`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async getFreeToTalkAppeals(conversationId) {
+    const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/free-to-talk/appeals`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async getFreeToTalkSettings(conversationId) {
+    const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/free-to-talk/safety-settings`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async moderateFreeToTalkReport(reportId, data) {
+    const res = await fetch(`${API_BASE_URL}/communication/free-to-talk/reports/${reportId}/actions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
+  async getMyFreeToTalkAppeals() {
+    const res = await fetch(`${API_BASE_URL}/communication/free-to-talk/my-appeals`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async getMyFreeToTalkActions() {
+    const res = await fetch(`${API_BASE_URL}/communication/free-to-talk/my-actions`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async appealFreeToTalkAction(actionId, reason) {
+    const res = await fetch(`${API_BASE_URL}/communication/free-to-talk/actions/${actionId}/appeal`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason }),
+    })
+    return handleResponse(res)
+  },
+
+  async reviewFreeToTalkAppeal(appealId, decision, response) {
+    const res = await fetch(`${API_BASE_URL}/communication/free-to-talk/appeals/${appealId}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ decision, response }),
+    })
+    return handleResponse(res)
+  },
+
+  async updateFreeToTalkSettings(conversationId, data) {
+    const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/free-to-talk/safety-settings`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
+  async updateFreeToTalkModerator(conversationId, userId, role, reason) {
+    const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/free-to-talk/moderators/${userId}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ role, reason }),
+    })
+    return handleResponse(res)
+  },
+
+  async revealFreeToTalkIdentity(messageId, reason) {
+    const res = await fetch(`${API_BASE_URL}/communication/free-to-talk/messages/${messageId}/reveal-identity`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason }),
+    })
+    return handleResponse(res)
+  },
+
   async sendMessage(conversationId, data) {
     const res = await fetch(`${API_BASE_URL}/communication/conversations/${conversationId}/messages`, {
       method: 'POST',
@@ -183,11 +287,11 @@ export const api = {
     return handleResponse(res)
   },
 
-  async reportMessage(messageId, reason) {
+  async reportMessage(messageId, category, details = '') {
     const res = await fetch(`${API_BASE_URL}/communication/messages/${messageId}/report`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ category, details }),
     })
     return handleResponse(res)
   },

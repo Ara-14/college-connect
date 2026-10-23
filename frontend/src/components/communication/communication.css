@@ -1893,6 +1893,770 @@ input:checked + .cc-slider:before {
   }
 }
 
+.cc-ftt-policy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.cc-ftt-policy-card {
+  width: min(100%, 560px);
+  max-height: min(90vh, 780px);
+  overflow-y: auto;
+  padding: clamp(22px, 5vw, 36px);
+  border: 1px solid #303530;
+  border-radius: 20px;
+  background: #101210;
+  color: #f4f6f4;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58);
+  animation: cc-ftt-enter 220ms ease-out both;
+}
+
+.cc-ftt-policy-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  margin-bottom: 18px;
+  border: 1px solid rgba(24, 164, 91, 0.32);
+  border-radius: 14px;
+  background: rgba(24, 164, 91, 0.12);
+  color: #49c77c;
+}
+
+.cc-ftt-policy-card h2,
+.cc-ftt-policy-card h3 {
+  margin: 0 0 12px;
+}
+
+.cc-ftt-policy-card h2 {
+  font-size: clamp(22px, 5vw, 28px);
+  letter-spacing: -0.03em;
+}
+
+.cc-ftt-policy-card h3 {
+  margin-top: 22px;
+  font-size: 14px;
+}
+
+.cc-ftt-policy-notice,
+.cc-ftt-policy-card li {
+  color: #bac0bb;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.cc-ftt-policy-card ul {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding-left: 20px;
+}
+
+.cc-ftt-policy-card > .cc-btn {
+  width: 100%;
+  min-height: 44px;
+}
+
+.cc-ftt-locked-composer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid #252a26;
+  color: #bfc6c0;
+  font-size: 13px;
+}
+
+.cc-ftt-modal-backdrop {
+  z-index: 1050;
+}
+
+.cc-ftt-moderation-panel {
+  max-height: min(88vh, 820px);
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.cc-ftt-review-section {
+  display: grid;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.cc-ftt-review-section + .cc-ftt-review-section {
+  margin-top: 20px;
+}
+
+.cc-ftt-review-section h4 {
+  margin: 0;
+  color: #f0f3f0;
+  font-size: 14px;
+}
+
+.cc-ftt-review-section > label,
+.cc-ftt-review-card > label {
+  display: grid;
+  gap: 6px;
+  color: #c4cbc5;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cc-ftt-review-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #303630;
+  border-radius: 12px;
+  background: #171a17;
+  color: #e8ece8;
+}
+
+.cc-ftt-review-card > p {
+  margin: 0;
+  color: #bdc4be;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.cc-ftt-review-card .cc-input {
+  width: 100%;
+  color: #f3f5f3;
+  border-color: #3a423b;
+  background: #101210;
+}
+
+.cc-ftt-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  color: #ffb260;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cc-ftt-appeal-status {
+  padding: 10px;
+  border-radius: 9px;
+  background: rgba(24, 164, 91, 0.1);
+}
+
+.cc-ftt-appeal-status strong {
+  color: #69d08f;
+  font-size: 12px;
+}
+
+.cc-ftt-appeal-status p {
+  margin: 6px 0 0;
+  color: #c1c8c2;
+  font-size: 12px;
+}
+
+.cc-ftt-policy-card :focus-visible,
+.cc-ftt-moderation-panel :focus-visible {
+  outline: 2px solid #49c77c;
+  outline-offset: 2px;
+}
+
+.app-layout .communication-page .cc-ftt-policy-card {
+  border-color: #dbe5dc;
+  background: #fff;
+  color: #233328;
+}
+
+.app-layout .communication-page .cc-ftt-policy-notice,
+.app-layout .communication-page .cc-ftt-policy-card li,
+.app-layout .communication-page .cc-ftt-review-section > label,
+.app-layout .communication-page .cc-ftt-review-card > label {
+  color: #59675d;
+}
+
+.app-layout .communication-page .cc-ftt-policy-card h3,
+.app-layout .communication-page .cc-ftt-review-section h4 {
+  color: #293a2e;
+}
+
+.app-layout .communication-page .cc-ftt-locked-composer {
+  border-top-color: #e3ebe4;
+  color: #526256;
+}
+
+.app-layout .communication-page .cc-ftt-review-card {
+  border-color: #dfe8e0;
+  background: #f7faf7;
+  color: #293a2e;
+}
+
+.app-layout .communication-page .cc-ftt-review-card > p,
+.app-layout .communication-page .cc-ftt-appeal-status p {
+  color: #59675d;
+}
+
+.app-layout .communication-page .cc-ftt-review-card .cc-input {
+  border-color: #d5e0d6;
+  background: #fff;
+  color: #293a2e;
+}
+
+@keyframes cc-ftt-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 560px) {
+  .cc-ftt-policy-overlay {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .cc-ftt-policy-card {
+    max-height: 92vh;
+    border-radius: 18px;
+  }
+
+  .cc-ftt-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .cc-ftt-moderation-panel {
+    max-height: 92vh;
+    border-radius: 18px 18px 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-ftt-policy-card {
+    animation: none;
+  }
+}
+
+.cc-message-tag-filters {
+  padding: 8px 20px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: #111;
+}
+
+.cc-message-tag-filter-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cc-tag-count-status,
+.cc-tag-count-retry {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.cc-tag-count-retry {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cc-message-tag-filter-list {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 1px 0 4px;
+  scrollbar-width: thin;
+}
+
+.cc-message-row {
+  animation: cc-tag-filter-in 150ms ease-out both;
+}
+
+.cc-tag-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  min-height: 25px;
+  padding: 4px 9px;
+  border: 1px solid #343434;
+  border-radius: 999px;
+  background: #1b1b1b;
+  color: #e6e6e6;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.cc-tag-chip[data-tag-category='academic'] {
+  border-color: rgba(108, 153, 198, 0.32);
+  background: rgba(69, 105, 145, 0.16);
+}
+
+.cc-tag-chip[data-tag-category='communication'] {
+  border-color: rgba(196, 157, 93, 0.32);
+  background: rgba(145, 107, 50, 0.14);
+}
+
+.cc-tag-filter-chip {
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.cc-tag-filter-chip:hover,
+.cc-tag-filter-chip.selected {
+  border-color: var(--accent-green);
+  color: #fff;
+}
+
+.cc-tag-filter-chip.selected {
+  box-shadow: 0 0 0 2px rgba(24, 164, 91, 0.12);
+}
+
+.cc-tag-count {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.cc-inline-message-tag {
+  display: inline;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(24, 164, 91, 0.13);
+  color: var(--accent-green);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.cc-inline-message-tag:hover {
+  text-decoration: underline;
+}
+
+.cc-tag-filter-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.cc-tag-filter-state h3,
+.cc-tag-filter-state p {
+  margin: 0;
+}
+
+.cc-tag-filter-state p {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cc-tag-suggestion-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 5px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 7px;
+  border: 1px solid #343434;
+  border-radius: 12px;
+  background: #151515;
+  animation: cc-tag-suggestion-in 160ms ease-out;
+}
+
+.cc-tag-suggestion {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #eee;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cc-tag-suggestion:hover,
+.cc-tag-suggestion.active {
+  border-color: #383838;
+  background: #222;
+}
+
+.cc-tag-suggestion-name {
+  color: var(--accent-green);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cc-tag-suggestion-description {
+  overflow: hidden;
+  color: #a0a0a0;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-draft-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.cc-draft-tag {
+  padding-right: 5px;
+}
+
+.cc-draft-tag button {
+  display: inline-flex;
+  padding: 1px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cc-draft-tag button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cc-tag-validation-error {
+  margin: 0;
+  color: #cf7474;
+  font-size: 11px;
+}
+
+.cc-tag-filter-chip:focus-visible,
+.cc-tag-count-retry:focus-visible,
+.cc-inline-message-tag:focus-visible,
+.cc-tag-suggestion:focus-visible,
+.cc-draft-tag button:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+.app-layout .communication-page .cc-message-tag-filters {
+  background: #fff;
+  border-color: #e3ebe4;
+}
+
+.app-layout .communication-page .cc-tag-chip {
+  border-color: #dce5dd;
+  background: #f4f7f4;
+  color: #35443a;
+}
+
+.app-layout .communication-page .cc-tag-chip[data-tag-category='academic'] {
+  border-color: #d3e0ec;
+  background: #f0f5fa;
+}
+
+.app-layout .communication-page .cc-tag-chip[data-tag-category='communication'] {
+  border-color: #e8dcc7;
+  background: #faf5eb;
+}
+
+.app-layout .communication-page .cc-tag-filter-chip:hover,
+.app-layout .communication-page .cc-tag-filter-chip.selected {
+  border-color: var(--accent-green);
+  color: #1c3a28;
+}
+
+.app-layout .communication-page .cc-tag-suggestion-menu {
+  border-color: #dce5dd;
+  background: #fff;
+}
+
+.app-layout .communication-page .cc-tag-suggestion {
+  color: #293a2e;
+}
+
+.app-layout .communication-page .cc-tag-suggestion:hover,
+.app-layout .communication-page .cc-tag-suggestion.active {
+  border-color: #dce5dd;
+  background: #f5f8f5;
+}
+
+.app-layout .communication-page .cc-tag-suggestion-description {
+  color: #68776b;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-message-tag-filters {
+  background: #111;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-chip {
+  border-color: #343434;
+  background: #1b1b1b;
+  color: #e6e6e6;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-chip[data-tag-category='academic'] {
+  border-color: rgba(108, 153, 198, 0.32);
+  background: rgba(69, 105, 145, 0.16);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-chip[data-tag-category='communication'] {
+  border-color: rgba(196, 157, 93, 0.32);
+  background: rgba(145, 107, 50, 0.14);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-filter-chip:hover,
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-filter-chip.selected {
+  color: #fff;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-suggestion-menu {
+  border-color: #343434;
+  background: #151515;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-suggestion {
+  color: #eee;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-suggestion:hover,
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-suggestion.active {
+  border-color: #383838;
+  background: #222;
+}
+
+@keyframes cc-tag-suggestion-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  @keyframes cc-tag-filter-in {
+    from {
+      opacity: 0.7;
+      transform: translateY(3px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .cc-message-tag-filters {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .cc-tag-suggestion-menu {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-tag-filter-chip {
+    transition: none;
+  }
+
+  .cc-tag-suggestion-menu {
+    animation: none;
+  }
+
+  .cc-message-row {
+    animation: none;
+  }
+}
+
+.cc-tag-chip[data-tag-name],
+.cc-inline-message-tag[data-tag-name],
+.cc-tag-suggestion[data-tag-name] {
+  border-color: color-mix(in srgb, var(--cc-tag-color) 42%, transparent);
+  background: color-mix(in srgb, var(--cc-tag-color) 12%, transparent);
+  color: var(--cc-tag-color);
+}
+
+.cc-tag-suggestion[data-tag-name] .cc-tag-suggestion-name {
+  color: var(--cc-tag-color);
+}
+
+.app-layout .communication-page .cc-tag-chip[data-tag-name],
+.app-layout .communication-page .cc-inline-message-tag[data-tag-name],
+.app-layout .communication-page .cc-tag-suggestion[data-tag-name] {
+  border-color: color-mix(in srgb, var(--cc-tag-color) 32%, white);
+  background: color-mix(in srgb, var(--cc-tag-color) 10%, white);
+  color: var(--cc-tag-color);
+}
+
+.app-layout .communication-page .cc-tag-suggestion[data-tag-name] .cc-tag-suggestion-name {
+  color: var(--cc-tag-color);
+}
+
+.app-layout .communication-page .cc-tag-filter-chip[data-tag-name]:hover,
+.app-layout .communication-page .cc-tag-filter-chip[data-tag-name].selected {
+  border-color: var(--cc-tag-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cc-tag-color) 16%, transparent);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-chip[data-tag-name],
+html[data-theme='dark'] .app-layout .communication-page .cc-inline-message-tag[data-tag-name],
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-suggestion[data-tag-name] {
+  border-color: color-mix(in srgb, var(--cc-tag-color) 48%, #111);
+  background: color-mix(in srgb, var(--cc-tag-color) 20%, #111);
+  color: color-mix(in srgb, var(--cc-tag-color) 55%, white);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-suggestion[data-tag-name] .cc-tag-suggestion-name {
+  color: color-mix(in srgb, var(--cc-tag-color) 55%, white);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-filter-chip[data-tag-name]:hover,
+html[data-theme='dark'] .app-layout .communication-page .cc-tag-filter-chip[data-tag-name].selected {
+  border-color: var(--cc-tag-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cc-tag-color) 22%, transparent);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-comm-dashboard {
+  background:
+    radial-gradient(ellipse at 92% 0%, rgba(255, 255, 255, 0.025), transparent 38%),
+    #080808;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-comm-subnav,
+html[data-theme='dark'] .app-layout .communication-page .cc-conv-col,
+html[data-theme='dark'] .app-layout .communication-page .cc-chat-col,
+html[data-theme='dark'] .app-layout .communication-page .cc-settings-card,
+html[data-theme='dark'] .app-layout .communication-page .cc-conv-search-bar,
+html[data-theme='dark'] .app-layout .communication-page .cc-chat-search-bar,
+html[data-theme='dark'] .app-layout .communication-page .cc-composer-area,
+html[data-theme='dark'] .app-layout .communication-page .cc-chat-header,
+html[data-theme='dark'] .app-layout .communication-page .cc-mobile-back-bar {
+  background: #111111;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-comm-body,
+html[data-theme='dark'] .app-layout .communication-page .cc-messages-container {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 255, 255, 0.018), transparent 28%),
+    #080808;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-subnav-item.active,
+html[data-theme='dark'] .app-layout .communication-page .cc-conv-item.selected {
+  background: #202020;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f0f0f0;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-pinned-banner {
+  background: #141414;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #dedede;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-filter-tabs {
+  background: #0b0b0b;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-conv-search-bar,
+html[data-theme='dark'] .app-layout .communication-page .cc-conv-search-bar input,
+html[data-theme='dark'] .app-layout .communication-page .cc-chat-search-bar,
+html[data-theme='dark'] .app-layout .communication-page .cc-chat-search-bar input,
+html[data-theme='dark'] .app-layout .communication-page .cc-composer-input,
+html[data-theme='dark'] .app-layout .communication-page .cc-chat-header,
+html[data-theme='dark'] .app-layout .communication-page .cc-header-name-row h3,
+html[data-theme='dark'] .app-layout .communication-page .cc-conv-title,
+html[data-theme='dark'] .app-layout .communication-page .cc-msg-sender-name {
+  color: #e5f1e8;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .cc-tab-pill,
+html[data-theme='dark'] .app-layout .communication-page .cc-conv-item:hover,
+html[data-theme='dark'] .app-layout .communication-page .cc-icon-btn:hover,
+html[data-theme='dark'] .app-layout .communication-page .cc-reply-quote,
+html[data-theme='dark'] .app-layout .communication-page .cc-attachment-card,
+html[data-theme='dark'] .app-layout .communication-page .cc-you-pill,
+html[data-theme='dark'] .app-layout .communication-page .cc-staged-file-pill {
+  background: #141414;
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #a5b6a8;
+}
+
+html[data-theme='dark'] .app-layout .communication-page .bubble-other {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #e5f1e8;
+}
+
+html[data-theme='dark'] .communication-page .cc-comm-dashboard {
+  background:
+    radial-gradient(ellipse at 92% 0%, rgba(255, 255, 255, 0.025), transparent 38%),
+    #080808;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .communication-page .cc-comm-subnav,
+html[data-theme='dark'] .communication-page .cc-conv-col,
+html[data-theme='dark'] .communication-page .cc-chat-col,
+html[data-theme='dark'] .communication-page .cc-chat-header,
+html[data-theme='dark'] .communication-page .cc-settings-card,
+html[data-theme='dark'] .communication-page .cc-search-input-wrap,
+html[data-theme='dark'] .communication-page .cc-mobile-back-bar {
+  background-color: #111111;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .communication-page .cc-comm-body,
+html[data-theme='dark'] .communication-page .cc-messages-container {
+  background-color: #050a06;
+}
+
+html[data-theme='dark'] .communication-page .cc-chat-header {
+  background: linear-gradient(180deg, #151515, #111111);
+}
+
+html[data-theme='dark'] .communication-page .cc-message-row.other .cc-message-bubble {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme='dark'] .communication-page .cc-message-row.self .cc-message-bubble {
+  background: linear-gradient(135deg, #303030, #202020);
+}
+
+html[data-theme='dark'] .communication-page .cc-conv-item:hover,
+html[data-theme='dark'] .communication-page .cc-conv-item.active {
+  background: #1a1a1a;
+}
+
 .app-layout .communication-page .cc-comm-dashboard {
   border-color: #e1e9e2;
   background: #f4f8f4;
@@ -2082,4 +2846,3 @@ input:checked + .cc-slider:before {
     padding: 16px;
   }
 }
-

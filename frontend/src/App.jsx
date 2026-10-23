@@ -45,6 +45,7 @@ import {
 
 import './App.css'
 import CommunicationDashboard from './components/communication/CommunicationDashboard'
+import ThemeToggle from './components/ThemeToggle'
 import './components/communication/communication.css'
 import { api } from './services/api'
 import { connectSocket, disconnectSocket, getSocket } from './services/socket'
@@ -250,6 +251,9 @@ const communities = [
 ]
 
 function App() {
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem('cc_theme') === 'dark' ? 'dark' : 'light'
+  )
   const [showTideIntro, setShowTideIntro] = useState(true)
   const [authUser, setAuthUser] = useState(() => {
     const saved = localStorage.getItem('cc_auth_user')
@@ -303,10 +307,15 @@ function App() {
   // Socket & Notification Sync
   useEffect(() => {
     if (isLoggedIn && authUser) {
-      connectSocket(authUser)
+      connectSocket()
       fetchNotifs()
     }
   }, [isLoggedIn, authUser?.id])
+
+  useEffect(() => {
+    localStorage.setItem('cc_theme', theme)
+    document.documentElement.dataset.theme = theme
+  }, [theme])
 
   const fetchNotifs = async () => {
     try {
@@ -427,7 +436,7 @@ function App() {
       setUserRole(res.user.role)
       setIsLoggedIn(true)
       setActivePage('messages')
-      connectSocket(res.user)
+      connectSocket()
       setShowQuickSwitchMenu(false)
     } catch (err) {
       setAuthError(err.message || 'Quick login failed')
@@ -604,7 +613,7 @@ function App() {
   // ==========================================
   if (!isLoggedIn) {
     return (
-      <div className="login-page">
+      <div className="login-page" data-theme={theme}>
         <div className="login-atmosphere" aria-hidden="true">
           <span className="login-bubble login-bubble-one" />
           <span className="login-bubble login-bubble-two" />
@@ -883,7 +892,7 @@ function App() {
   // MAIN APPLICATION DASHBOARD
   // ==========================================
   return (
-    <div className="app-layout">
+    <div className="app-layout" data-theme={theme}>
       {/* LEFT NAVIGATION SIDEBAR */}
       <aside className={`sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="brand" onClick={() => navigate('home')}>
@@ -1682,6 +1691,16 @@ function App() {
             {activePage === 'settings' && (
               <div className="page-panel">
                 <h2>Settings ⚙️</h2>
+                <div className="settings-item theme-setting-item">
+                  <div className="theme-setting-copy">
+                    <strong>Appearance</strong>
+                    <span>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
+                  </div>
+                  <ThemeToggle
+                    theme={theme}
+                    onToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+                  />
+                </div>
                 <div className="settings-item">
                   <strong>Account Name</strong>
                   <span>{displayName}</span>

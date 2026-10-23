@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Send,
   Paperclip,
@@ -21,8 +21,13 @@ import {
   ShieldAlert,
   Clock,
   Sparkles,
+  Shield,
+  MessageCircleMore,
 } from 'lucide-react'
 import { api } from '../../services/api'
+import { MESSAGE_TAGS } from './messageTags'
+import FreeToTalkModerationPanel from './FreeToTalkModerationPanel'
+import FreeToTalkAppeals from './FreeToTalkAppeals'
 import {
   joinConversationRoom,
   leaveConversationRoom,
@@ -48,15 +53,59 @@ export default function ChatWindow({
   const [editingContent, setEditingContent] = useState('')
   const [typingUser, setTypingUser] = useState(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const [searchInChat, setSearchInChat] = useState('')
+  const [searchState, setSearchState] = useState({ conversationId: conversation.id, value: '' })
+  const searchInChat = searchState.conversationId === conversation.id ? searchState.value : ''
+  const setSearchInChat = (value) => setSearchState({ conversationId: conversation.id, value })
+  const [debouncedSearchState, setDebouncedSearchState] = useState({
+    conversationId: conversation.id,
+    value: '',
+  })
+  const debouncedSearch = debouncedSearchState.conversationId === conversation.id
+    ? debouncedSearchState.value
+    : ''
+  const [tagFilterState, setTagFilterState] = useState({ conversationId: conversation.id, tag: '' })
+  const activeTag = tagFilterState.conversationId === conversation.id ? tagFilterState.tag : ''
+  const setActiveTag = (tag) => setTagFilterState({ conversationId: conversation.id, tag })
+  const [tagCountState, setTagCountState] = useState({ conversationId: conversation.id, counts: {} })
+  const tagCounts = tagCountState.conversationId === conversation.id ? tagCountState.counts : {}
+  const [tagCountLoading, setTagCountLoading] = useState(true)
+  const [tagCountError, setTagCountError] = useState('')
+  const [messageError, setMessageError] = useState('')
+  const [cursorPosition, setCursorPosition] = useState(0)
+  const [suggestionIndex, setSuggestionIndex] = useState(0)
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false)
   const [showSearchBox, setShowSearchBox] = useState(false)
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
+  const [policyAcceptedState, setPolicyAcceptedState] = useState({
+    conversationId: conversation.id,
+    accepted: Boolean(conversation.myMembership?.hasAcceptedPolicy),
+  })
+  const [policyAccepting, setPolicyAccepting] = useState(false)
+  const [policyError, setPolicyError] = useState('')
+  const [showModerationPanel, setShowModerationPanel] = useState(false)
+  const [showAppealsPanel, setShowAppealsPanel] = useState(false)
 
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const typingTimeoutRef = useRef(null)
+  const fetchRequestRef = useRef(0)
+  const tagCountRequestRef = useRef(0)
+  const messageFiltersRef = useRef({ tag: '', search: '' })
+  const fetchMessagesRef = useRef(null)
+  const fetchTagCountsRef = useRef(null)
+  const onConversationUpdatedRef = useRef(onConversationUpdated)
 
   const isDirect = conversation.type === 'DIRECT' || conversation.type === 'QUERY'
+  const isFreeToTalk = Boolean(conversation.isFreeToTalk)
+  const policyAccepted = !isFreeToTalk || (policyAcceptedState.conversationId === conversation.id
+    ? policyAcceptedState.accepted
+    : Boolean(conversation.myMembership?.hasAcceptedPolicy))
+  const canModerateFreeToTalk = isFreeToTalk &&
+    (currentUser.role === 'ADMIN' || conversation.myMembership?.role === 'MODERATOR')
+  const freeToTalkTagNames = new Set(['doubt', 'help', 'academic', 'feedback', 'general'])
+  const availableTags = isFreeToTalk
+    ? MESSAGE_TAGS.filter(({ name }) => freeToTalkTagNames.has(name))
+    : MESSAGE_TAGS
   const otherMember = conversation.otherMember
   const isFaculty = currentUser.role === 'FACULTY' || currentUser.role === 'ADMIN'
   const isReadOnly = conversation.isReadOnly && !isFaculty
@@ -66,29 +115,110 @@ export default function ChatWindow({
   const isStudentToFaculty =
     currentUser.role === 'STUDENT' && isDirect && otherMember?.role === 'FACULTY'
 
-  // Fetch messages for conversation
-  const fetchMessages = async () => {
+  const acceptSafetyNotice = async () => {
+    setPolicyAccepting(true)
+    setPolicyError('')
     try {
-      setLoading(true)
-      const data = await api.getMessages(conversation.id)
-      setMessages(data.messages || [])
-      // Mark as read
-      await api.markConversationRead(conversation.id)
+      await api.acceptFreeToTalkPolicy(conversation.id)
+      setPolicyAcceptedState({ conversationId: conversation.id, accepted: true })
     } catch (err) {
-      console.error('Failed to load messages:', err)
+      setPolicyError(err.message || 'Could not record your acknowledgement.')
     } finally {
-      setLoading(false)
+      setPolicyAccepting(false)
     }
   }
 
+  // Fetch messages for conversation
+  const fetchMessages = useCallback(async (tag = activeTag, search = debouncedSearch) => {
+    if (isFreeToTalk && !policyAccepted) return
+    const requestId = ++fetchRequestRef.current
+    try {
+      setLoading(true)
+      setMessageError('')
+      const data = await api.getMessages(conversation.id, {
+        ...(tag && { tag }),
+        ...(search && { search }),
+      })
+      if (requestId !== fetchRequestRef.current) return
+      setMessages(data.messages || [])
+      try {
+        await api.markConversationRead(conversation.id)
+      } catch (err) {
+        console.error('Failed to mark conversation as read:', err)
+      }
+    } catch (err) {
+      console.error('Failed to load messages:', err)
+      if (requestId === fetchRequestRef.current) {
+        setMessageError(err.message || 'Could not load messages.')
+      }
+    } finally {
+      if (requestId === fetchRequestRef.current) setLoading(false)
+    }
+  }, [activeTag, conversation.id, debouncedSearch, isFreeToTalk, policyAccepted])
+
   useEffect(() => {
-    fetchMessages()
-    joinConversationRoom(conversation.id)
+    if (policyAccepted) joinConversationRoom(conversation.id)
 
     return () => {
+      fetchRequestRef.current += 1
       leaveConversationRoom(conversation.id)
     }
-  }, [conversation.id])
+  }, [conversation.id, policyAccepted])
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearchState({ conversationId: conversation.id, value: searchInChat.trim() })
+    }, 250)
+    return () => clearTimeout(timeout)
+  }, [conversation.id, searchInChat])
+
+  useEffect(() => {
+    let active = true
+    Promise.resolve().then(() => {
+      if (active && policyAccepted) fetchMessages()
+    })
+    return () => {
+      active = false
+    }
+  }, [fetchMessages, policyAccepted])
+
+  const fetchTagCounts = useCallback(async () => {
+    if (isFreeToTalk && !policyAccepted) return
+    const requestId = ++tagCountRequestRef.current
+    try {
+      setTagCountLoading(true)
+      setTagCountError('')
+      const data = await api.getMessageTagCounts(conversation.id)
+      if (requestId === tagCountRequestRef.current) {
+        setTagCountState({ conversationId: conversation.id, counts: data.tagCounts || {} })
+      }
+    } catch (err) {
+      console.error('Failed to load message tag counts:', err)
+      if (requestId === tagCountRequestRef.current) {
+        setTagCountError(err.message || 'Could not load tag counts.')
+      }
+    } finally {
+      if (requestId === tagCountRequestRef.current) setTagCountLoading(false)
+    }
+  }, [conversation.id, isFreeToTalk, policyAccepted])
+
+  useEffect(() => {
+    let active = true
+    Promise.resolve().then(() => {
+      if (active && policyAccepted) fetchTagCounts()
+    })
+    return () => {
+      active = false
+      tagCountRequestRef.current += 1
+    }
+  }, [fetchTagCounts, policyAccepted])
+
+  useEffect(() => {
+    messageFiltersRef.current = { tag: activeTag, search: debouncedSearch }
+    fetchMessagesRef.current = fetchMessages
+    fetchTagCountsRef.current = fetchTagCounts
+    onConversationUpdatedRef.current = onConversationUpdated
+  }, [activeTag, debouncedSearch, fetchMessages, fetchTagCounts, onConversationUpdated])
 
   // Scroll to bottom when messages update
   useEffect(() => {
@@ -101,19 +231,30 @@ export default function ChatWindow({
   useEffect(() => {
     const handleNewMessage = (newMsg) => {
       if (newMsg.conversationId === conversation.id) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === newMsg.id)) return prev
-          return [...prev, newMsg]
-        })
+        const { tag, search } = messageFiltersRef.current
+        if (search || (tag && !(newMsg.tags || []).includes(tag))) {
+          fetchMessagesRef.current?.()
+        } else {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMsg.id)) return prev
+            return [...prev, newMsg]
+          })
+        }
+        fetchTagCountsRef.current?.()
         api.markConversationRead(conversation.id)
       }
     }
 
     const handleMessageEdited = (editedMsg) => {
       if (editedMsg.conversationId === conversation.id) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === editedMsg.id ? editedMsg : m))
-        )
+        if (messageFiltersRef.current.tag || messageFiltersRef.current.search) {
+          fetchMessagesRef.current?.()
+        } else {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === editedMsg.id ? editedMsg : m))
+          )
+        }
+        fetchTagCountsRef.current?.()
       }
     }
 
@@ -126,14 +267,24 @@ export default function ChatWindow({
               : m
           )
         )
+        fetchTagCountsRef.current?.()
       }
+    }
+
+    const handleMessageModerated = ({ messageId, conversationId, action }) => {
+      if (conversationId !== conversation.id) return
+      setMessages((prev) => prev.map((message) => message.id !== messageId
+        ? message
+        : action === 'REMOVE'
+          ? { ...message, isDeleted: true, content: 'This message was removed by moderators.', attachments: [] }
+          : { ...message, isHidden: true, content: 'This message is hidden pending moderation.', attachments: [] }))
     }
 
     const handleMessagePinned = ({ messageId, isPinned }) => {
       setMessages((prev) =>
         prev.map((m) => (m.id === messageId ? { ...m, isPinned } : m))
       )
-      onConversationUpdated?.()
+      onConversationUpdatedRef.current?.()
     }
 
     const handleUserTyping = ({ conversationId, userId, userName }) => {
@@ -149,32 +300,44 @@ export default function ChatWindow({
     }
 
     // Attach to window custom event or socket
-    window.addEventListener('cc_socket_new_message', (e) => handleNewMessage(e.detail))
-    window.addEventListener('cc_socket_message_edited', (e) => handleMessageEdited(e.detail))
-    window.addEventListener('cc_socket_message_deleted', (e) => handleMessageDeleted(e.detail))
-    window.addEventListener('cc_socket_message_pinned', (e) => handleMessagePinned(e.detail))
-    window.addEventListener('cc_socket_user_typing', (e) => handleUserTyping(e.detail))
-    window.addEventListener('cc_socket_user_stopped_typing', (e) => handleUserStoppedTyping(e.detail))
+    const onNewMessage = (e) => handleNewMessage(e.detail)
+    const onMessageEdited = (e) => handleMessageEdited(e.detail)
+    const onMessageDeleted = (e) => handleMessageDeleted(e.detail)
+    const onMessageModerated = (e) => handleMessageModerated(e.detail)
+    const onMessagePinned = (e) => handleMessagePinned(e.detail)
+    const onUserTyping = (e) => handleUserTyping(e.detail)
+    const onUserStoppedTyping = (e) => handleUserStoppedTyping(e.detail)
+    window.addEventListener('cc_socket_new_message', onNewMessage)
+    window.addEventListener('cc_socket_message_edited', onMessageEdited)
+    window.addEventListener('cc_socket_message_deleted', onMessageDeleted)
+    window.addEventListener('cc_socket_message_moderated', onMessageModerated)
+    window.addEventListener('cc_socket_message_pinned', onMessagePinned)
+    window.addEventListener('cc_socket_user_typing', onUserTyping)
+    window.addEventListener('cc_socket_user_stopped_typing', onUserStoppedTyping)
 
     return () => {
-      window.removeEventListener('cc_socket_new_message', (e) => handleNewMessage(e.detail))
-      window.removeEventListener('cc_socket_message_edited', (e) => handleMessageEdited(e.detail))
-      window.removeEventListener('cc_socket_message_deleted', (e) => handleMessageDeleted(e.detail))
-      window.removeEventListener('cc_socket_message_pinned', (e) => handleMessagePinned(e.detail))
-      window.removeEventListener('cc_socket_user_typing', (e) => handleUserTyping(e.detail))
-      window.removeEventListener('cc_socket_user_stopped_typing', (e) => handleUserStoppedTyping(e.detail))
+      window.removeEventListener('cc_socket_new_message', onNewMessage)
+      window.removeEventListener('cc_socket_message_edited', onMessageEdited)
+      window.removeEventListener('cc_socket_message_deleted', onMessageDeleted)
+      window.removeEventListener('cc_socket_message_moderated', onMessageModerated)
+      window.removeEventListener('cc_socket_message_pinned', onMessagePinned)
+      window.removeEventListener('cc_socket_user_typing', onUserTyping)
+      window.removeEventListener('cc_socket_user_stopped_typing', onUserStoppedTyping)
     }
   }, [conversation.id, currentUser.id])
 
   // Handle typing status emission
   const handleInputChange = (e) => {
     setInputText(e.target.value)
+    setCursorPosition(e.target.selectionStart)
+    setSuggestionsDismissed(false)
+    setSuggestionIndex(0)
 
-    emitTypingStart(conversation.id, currentUser)
+    emitTypingStart(conversation.id)
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
 
     typingTimeoutRef.current = setTimeout(() => {
-      emitTypingStop(conversation.id, currentUser)
+      emitTypingStop(conversation.id)
     }, 2000)
   }
 
@@ -202,10 +365,20 @@ export default function ChatWindow({
   // Send Message
   const handleSendMessage = async (e) => {
     e?.preventDefault()
-    if ((!inputText.trim() && stagedFiles.length === 0) || !canSend) return
+    if ((!inputText.trim() && stagedFiles.length === 0) || !canSend ||
+      !policyAccepted || invalidDraftTags.length > 0 ||
+      (isFreeToTalk && conversation.myMembership?.messagingRestrictedUntil &&
+        new Date(conversation.myMembership.messagingRestrictedUntil) > new Date())) return
 
+    const failedDraft = {
+      inputText,
+      stagedFiles,
+      replyingTo,
+      queryCategory,
+    }
     const payload = {
       content: inputText.trim(),
+      tags: draftTags,
       replyToId: replyingTo?.id || undefined,
       queryCategory: queryCategory || undefined,
       attachments: stagedFiles,
@@ -213,17 +386,27 @@ export default function ChatWindow({
 
     // Clear inputs immediately
     setInputText('')
+    setCursorPosition(0)
     setStagedFiles([])
     setReplyingTo(null)
     setQueryCategory('')
     setShowEmojiPicker(false)
-    emitTypingStop(conversation.id, currentUser)
+    emitTypingStop(conversation.id)
 
     try {
       const res = await api.sendMessage(conversation.id, payload)
-      setMessages((prev) => [...prev, res.message])
+      if (activeTag || debouncedSearch) {
+        fetchMessages()
+      } else {
+        setMessages((prev) => [...prev, res.message])
+      }
+      fetchTagCounts()
       onConversationUpdated?.()
     } catch (err) {
+      setInputText(failedDraft.inputText)
+      setStagedFiles(failedDraft.stagedFiles)
+      setReplyingTo(failedDraft.replyingTo)
+      setQueryCategory(failedDraft.queryCategory)
       alert(`Failed to send message: ${err.message}`)
     }
   }
@@ -305,13 +488,83 @@ export default function ChatWindow({
     setInputText((prev) => prev + emoji)
   }
 
-  // Filter messages for search
-  const displayedMessages = messages.filter((m) =>
-    searchInChat
-      ? m.content.toLowerCase().includes(searchInChat.toLowerCase()) ||
-        m.sender?.fullName.toLowerCase().includes(searchInChat.toLowerCase())
-      : true
-  )
+  const draftTagNames = [...inputText.matchAll(/(?:^|[^\w])#([a-z][a-z0-9_-]{0,31})/gi)]
+    .map((match) => match[1].toLowerCase())
+  const draftTags = [...new Set(draftTagNames.filter((tag) => availableTags.some(({ name }) => name === tag)))]
+  const invalidDraftTags = [...new Set(draftTagNames.filter((tag) => !availableTags.some(({ name }) => name === tag)))]
+  const triggerMatch = inputText.slice(0, cursorPosition).match(/(?:^|[^\w])([#@][\w-]*)$/)
+  const triggerToken = triggerMatch?.[1] || ''
+  const mentionMembers = [...(conversation.members || []), ...(conversation.otherMember ? [conversation.otherMember] : [])]
+    .map((member) => member.user || member)
+    .filter((member, index, members) =>
+      member.id !== currentUser.id && member.username &&
+      members.findIndex((candidate) => candidate.id === member.id) === index
+    )
+  const suggestions = triggerToken.startsWith('#')
+    ? availableTags.filter(({ name }) => name.startsWith(triggerToken.slice(1).toLowerCase()))
+        .map((tag) => ({ ...tag, value: `#${tag.name}`, kind: 'tag' }))
+    : triggerToken.startsWith('@') && !isFreeToTalk
+      ? mentionMembers
+          .filter((member) => `${member.username} ${member.fullName || ''}`.toLowerCase()
+            .includes(triggerToken.slice(1).toLowerCase()))
+          .map((member) => ({
+            name: member.fullName || member.username,
+            description: `@${member.username}`,
+            value: `@${member.username}`,
+            category: member.role || 'Member',
+            kind: 'mention',
+          }))
+      : []
+  const showSuggestions = Boolean(triggerToken && suggestions.length && !suggestionsDismissed)
+  const displayedMessages = messages
+
+  const selectSuggestion = (suggestion) => {
+    const cursor = cursorPosition
+    const beforeCursor = inputText.slice(0, cursor)
+    const tokenMatch = beforeCursor.match(/(?:^|[^\w])([#@][\w-]*)$/)
+    if (!tokenMatch) return
+    const tokenStart = tokenMatch.index + tokenMatch[0].length - tokenMatch[1].length
+    const replacement = `${suggestion.value} `
+    const updatedText = `${inputText.slice(0, tokenStart)}${replacement}${inputText.slice(cursor)}`
+    const updatedCursor = tokenStart + replacement.length
+    setInputText(updatedText)
+    setCursorPosition(updatedCursor)
+    setSuggestionsDismissed(false)
+    setSuggestionIndex(0)
+  }
+
+  const removeDraftTag = (tag) => {
+    const updatedText = inputText
+      .replace(new RegExp(`(^|[^\\w])#${tag}(?=$|[^\\w])`, 'i'), '$1')
+      .replace(/[ \t]{2,}/g, ' ')
+    setInputText(updatedText)
+    setCursorPosition(updatedText.length)
+  }
+
+  const renderMessageText = (message) => {
+    const content = message.content || ''
+    const tags = new Set(message.tags || [])
+    return content.split(/(#[a-z][a-z0-9_-]*)/gi).map((part, index) => {
+      if (!part.startsWith('#')) return part
+      const tag = part.slice(1).toLowerCase()
+      if (!tags.has(tag)) return part
+      const tagInfo = MESSAGE_TAGS.find(({ name }) => name === tag)
+      return (
+        <button
+          key={`${part}-${index}`}
+          type="button"
+          className="cc-inline-message-tag"
+          data-tag-category={tagInfo?.category.toLowerCase()}
+          data-tag-name={tagInfo?.name}
+          style={tagInfo ? { '--cc-tag-color': tagInfo.color } : undefined}
+          aria-label={`Show messages tagged ${part}`}
+          onClick={() => setActiveTag(tag)}
+        >
+          {part}
+        </button>
+      )
+    })
+  }
 
   const pinnedMsg = messages.find((m) => m.isPinned) || conversation.pinnedMessage
 
@@ -335,7 +588,7 @@ export default function ChatWindow({
 
           <div>
             <div className="cc-header-name-row">
-              <h3>{conversation.title || otherMember?.fullName || 'Conversation'}</h3>
+              <h3>{isFreeToTalk ? 'Free to Talk!!' : conversation.title || otherMember?.fullName || 'Conversation'}</h3>
               {otherMember?.role && (
                 <span className={`cc-role-badge ${otherMember.role === 'FACULTY' ? 'badge-faculty' : 'badge-student'}`}>
                   {otherMember.role === 'FACULTY' ? 'Faculty' : 'Student'}
@@ -344,6 +597,7 @@ export default function ChatWindow({
               {conversation.type === 'ANNOUNCEMENT' && (
                 <span className="cc-role-badge badge-announcement">Broadcast</span>
               )}
+              {isFreeToTalk && <span className="cc-role-badge cc-anonymous-badge">Anonymous chat</span>}
             </div>
 
             <div className="cc-header-subtext">
@@ -361,7 +615,9 @@ export default function ChatWindow({
                 </>
               ) : (
                 <span>
-                  {conversation.members?.length || 0} members • {conversation.department || 'Campus'}
+                  {isFreeToTalk
+                    ? `${conversation.memberCount || 0} college members • your identity is hidden`
+                    : `${conversation.members?.length || 0} members • ${conversation.department || 'Campus'}`}
                 </span>
               )}
             </div>
@@ -378,6 +634,31 @@ export default function ChatWindow({
             <Search size={18} />
           </button>
 
+          {isFreeToTalk && (
+            <>
+              <button
+                type="button"
+                className="cc-icon-btn"
+                title="Your private moderation history and appeals"
+                aria-label="Your moderation history and appeals"
+                onClick={() => setShowAppealsPanel(true)}
+              >
+                <MessageCircleMore size={18} />
+              </button>
+              {canModerateFreeToTalk && (
+                <button
+                  type="button"
+                  className="cc-icon-btn"
+                  title="Review anonymous reports"
+                  aria-label="Review anonymous reports"
+                  onClick={() => setShowModerationPanel(true)}
+                >
+                  <Shield size={18} />
+                </button>
+              )}
+            </>
+          )}
+
           <button
             className="cc-icon-btn"
             title={conversation.myMembership?.isMuted ? 'Unmute' : 'Mute'}
@@ -386,7 +667,7 @@ export default function ChatWindow({
             {conversation.myMembership?.isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
 
-          {!isDirect && (
+          {!isDirect && !isFreeToTalk && (
             <button
               className="cc-icon-btn"
               title="Group Information & Members"
@@ -421,7 +702,9 @@ export default function ChatWindow({
           <Search size={16} />
           <input
             type="text"
-            placeholder="Search messages in this conversation..."
+            placeholder={isFreeToTalk
+              ? 'Search messages or #tags...'
+              : 'Search messages, #tags, people, or subjects...'}
             value={searchInChat}
             onChange={(e) => setSearchInChat(e.target.value)}
             autoFocus
@@ -434,6 +717,43 @@ export default function ChatWindow({
         </div>
       )}
 
+      <div className="cc-message-tag-filters" aria-label="Filter messages by hashtag">
+        <div className="cc-message-tag-filter-heading">
+          <span>Filter by tag</span>
+          {tagCountLoading && <span className="cc-tag-count-status">Updating...</span>}
+          {!tagCountLoading && tagCountError && (
+            <button type="button" className="cc-tag-count-retry" onClick={fetchTagCounts}>
+              Counts unavailable - retry
+            </button>
+          )}
+        </div>
+        <div className="cc-message-tag-filter-list">
+          <button
+            type="button"
+            className={`cc-tag-chip cc-tag-filter-chip ${!activeTag ? 'selected' : ''}`}
+            aria-pressed={!activeTag}
+            onClick={() => setActiveTag('')}
+          >
+            All
+          </button>
+          {availableTags.map((tag) => (
+            <button
+              key={tag.name}
+              type="button"
+              className={`cc-tag-chip cc-tag-filter-chip ${activeTag === tag.name ? 'selected' : ''}`}
+              data-tag-category={tag.category.toLowerCase()}
+              data-tag-name={tag.name}
+              style={{ '--cc-tag-color': tag.color }}
+              aria-pressed={activeTag === tag.name}
+              onClick={() => setActiveTag(activeTag === tag.name ? '' : tag.name)}
+            >
+              #{tag.name}
+              <span className="cc-tag-count">{tagCounts[tag.name] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* PINNED MESSAGE BANNER */}
       {pinnedMsg && (
         <div className="cc-pinned-banner">
@@ -442,7 +762,7 @@ export default function ChatWindow({
             <strong>Pinned Message: </strong>
             <span>{pinnedMsg.content}</span>
           </div>
-          {isFaculty && (
+          {(isFreeToTalk ? canModerateFreeToTalk : isFaculty) && (
             <button
               className="cc-icon-btn cc-btn-xs"
               title="Unpin message"
@@ -461,14 +781,42 @@ export default function ChatWindow({
             <div className="cc-spinner" />
             <p>Loading messages...</p>
           </div>
+        ) : messageError ? (
+          <div className="cc-tag-filter-state" role="alert">
+            <h3>Messages could not be loaded</h3>
+            <p>{messageError}</p>
+            <button type="button" className="cc-btn cc-btn-secondary cc-btn-xs" onClick={() => fetchMessages()}>
+              Try again
+            </button>
+          </div>
         ) : displayedMessages.length === 0 ? (
           <div className="cc-empty-state">
-            <Sparkles size={40} className="text-emerald-400" />
-            <h3>Start the conversation</h3>
-            <p>Send a message, ask an academic question, or share study materials.</p>
+            {activeTag || debouncedSearch ? (
+              <div className="cc-tag-filter-state">
+                <Sparkles size={32} />
+                <h3>No matching messages</h3>
+                <p>Try another hashtag or search term, or clear your filters.</p>
+                <button
+                  type="button"
+                  className="cc-btn cc-btn-secondary cc-btn-xs"
+                  onClick={() => {
+                    setActiveTag('')
+                    setSearchInChat('')
+                  }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <>
+                <Sparkles size={40} className="text-emerald-400" />
+                <h3>Start the conversation</h3>
+                <p>Send a message, ask an academic question, or share study materials.</p>
+              </>
+            )}
           </div>
         ) : (
-          displayedMessages.map((msg, index) => {
+          displayedMessages.map((msg) => {
             const isMe = msg.senderId === currentUser.id
             const isOther = !isMe
             const sender = msg.sender
@@ -480,7 +828,7 @@ export default function ChatWindow({
                 className={`cc-message-row ${isMe ? 'self' : 'other'}`}
               >
                 {/* Avatar for others in group */}
-                {isOther && !isDirect && (
+                {isOther && !isDirect && !isFreeToTalk && (
                   <img
                     src={sender?.avatarUrl}
                     alt=""
@@ -491,7 +839,7 @@ export default function ChatWindow({
 
                 <div className="cc-bubble-wrap">
                   {/* Sender Name & Role Badge in Groups */}
-                  {isOther && !isDirect && (
+                  {isOther && !isDirect && !isFreeToTalk && (
                     <div className="cc-msg-sender-header">
                       <span className="cc-msg-sender-name">{sender?.fullName}</span>
                       <span className={`cc-role-badge ${sender?.role === 'FACULTY' ? 'badge-faculty' : 'badge-student'}`}>
@@ -546,7 +894,7 @@ export default function ChatWindow({
                       </div>
                     ) : (
                       <>
-                        <p className="cc-message-text">{msg.content}</p>
+                        <p className="cc-message-text">{renderMessageText(msg)}</p>
 
                         {/* Attachments */}
                         {msg.attachments && msg.attachments.length > 0 && (
@@ -618,15 +966,15 @@ export default function ChatWindow({
                         </button>
                       )}
 
-                      <button
+                      {(!isFreeToTalk || canModerateFreeToTalk) && <button
                         className="cc-toolbar-btn"
                         title={msg.isPinned ? 'Unpin' : 'Pin'}
                         onClick={() => handleTogglePin(msg.id)}
                       >
                         <Pin size={14} />
-                      </button>
+                      </button>}
 
-                      {(isMe || isFaculty) && (
+                      {(isMe || (!isFreeToTalk && isFaculty)) && (
                         <button
                           className="cc-toolbar-btn"
                           title="Delete"
@@ -661,6 +1009,11 @@ export default function ChatWindow({
           <ShieldAlert size={18} />
           <span>This is an official announcement broadcast channel. Only faculty members can post announcements.</span>
         </div>
+      ) : isFreeToTalk && !policyAccepted ? (
+        <div className="cc-ftt-locked-composer">
+          <ShieldAlert size={18} />
+          <span>Review and accept the community safety notice to participate.</span>
+        </div>
       ) : (
         <div className="cc-composer-area">
           {/* Replying banner */}
@@ -681,7 +1034,7 @@ export default function ChatWindow({
           )}
 
           {/* Staged attachments preview */}
-          {stagedFiles.length > 0 && (
+          {!isFreeToTalk && stagedFiles.length > 0 && (
             <div className="cc-staged-files-bar">
               {stagedFiles.map((f, i) => (
                 <div key={i} className="cc-staged-file-pill">
@@ -730,6 +1083,63 @@ export default function ChatWindow({
             </div>
           )}
 
+          {showSuggestions && (
+            <div className="cc-tag-suggestion-menu" role="listbox" aria-label="Tag and mention suggestions">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={`${suggestion.kind}-${suggestion.value}`}
+                  type="button"
+                  role="option"
+                  aria-selected={index === suggestionIndex}
+                  className={`cc-tag-suggestion ${index === suggestionIndex ? 'active' : ''}`}
+                  data-tag-category={suggestion.category.toLowerCase()}
+                  data-tag-name={suggestion.kind === 'tag' ? suggestion.name : undefined}
+                  style={suggestion.kind === 'tag' ? { '--cc-tag-color': suggestion.color } : undefined}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectSuggestion(suggestion)}
+                >
+                  <span className="cc-tag-suggestion-name">
+                    {suggestion.kind === 'mention' ? suggestion.name : suggestion.value}
+                  </span>
+                  <span className="cc-tag-suggestion-description">{suggestion.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {draftTags.length > 0 && (
+            <div className="cc-draft-tags" aria-label="Tags on this message">
+              <span>Tags</span>
+              {draftTags.map((tagName) => {
+                const tagInfo = MESSAGE_TAGS.find(({ name }) => name === tagName)
+                return (
+                  <span
+                    key={tagName}
+                    className="cc-tag-chip cc-draft-tag"
+                    data-tag-category={tagInfo?.category.toLowerCase()}
+                    data-tag-name={tagName}
+                    style={tagInfo ? { '--cc-tag-color': tagInfo.color } : undefined}
+                  >
+                    #{tagName}
+                    <button
+                      type="button"
+                      aria-label={`Remove #${tagName}`}
+                      onClick={() => removeDraftTag(tagName)}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
+          {invalidDraftTags.length > 0 && (
+            <p className="cc-tag-validation-error" role="alert">
+              Unsupported hashtag{invalidDraftTags.length > 1 ? 's' : ''}: {invalidDraftTags.map((tag) => `#${tag}`).join(', ')}.
+              Choose one of the suggested tags.
+            </p>
+          )}
+
           <form onSubmit={handleSendMessage} className="cc-composer-form">
             {/* Hidden file input */}
             <input
@@ -740,7 +1150,7 @@ export default function ChatWindow({
               accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.webp,.zip"
             />
 
-            <button
+            {!isFreeToTalk && <button
               type="button"
               className="cc-composer-btn"
               title="Attach PDF, Document or Image"
@@ -748,7 +1158,7 @@ export default function ChatWindow({
               disabled={uploadingFile}
             >
               <Paperclip size={18} />
-            </button>
+            </button>}
 
             <button
               type="button"
@@ -761,31 +1171,101 @@ export default function ChatWindow({
 
             <textarea
               className="cc-composer-input"
-              placeholder={
-                isStudentToFaculty
-                  ? 'Ask academic query to professor... (Enter to send, Shift+Enter for newline)'
-                  : 'Type a message... (Enter to send, Shift+Enter for newline)'
-              }
+              placeholder={isFreeToTalk
+                ? 'Speak freely... Type # for a topic tag (Enter to send)'
+                : isStudentToFaculty
+                  ? 'Ask your professor... Type # for tags or @ to mention (Enter to send)'
+                  : 'Type a message... Type # for tags or @ to mention (Enter to send)'}
               value={inputText}
               onChange={handleInputChange}
+              onSelect={(e) => setCursorPosition(e.target.selectionStart)}
               onKeyDown={(e) => {
+                if (showSuggestions && e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setSuggestionIndex((index) => (index + 1) % suggestions.length)
+                  return
+                }
+                if (showSuggestions && e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setSuggestionIndex((index) => (index - 1 + suggestions.length) % suggestions.length)
+                  return
+                }
+                if (showSuggestions && e.key === 'Escape') {
+                  e.preventDefault()
+                  setSuggestionsDismissed(true)
+                  return
+                }
+                if (showSuggestions && e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  selectSuggestion(suggestions[suggestionIndex])
+                  return
+                }
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   handleSendMessage()
                 }
               }}
               rows={1}
+              aria-label="Message input"
             />
 
             <button
               type="submit"
               className="cc-send-btn"
-              disabled={!inputText.trim() && stagedFiles.length === 0}
+              disabled={(!inputText.trim() && stagedFiles.length === 0) ||
+                (isFreeToTalk && conversation.myMembership?.messagingRestrictedUntil &&
+                  new Date(conversation.myMembership.messagingRestrictedUntil) > new Date())}
             >
               <Send size={18} />
             </button>
           </form>
+
         </div>
+      )}
+
+      {isFreeToTalk && !policyAccepted && (
+        <div className="cc-ftt-policy-overlay">
+          <section
+            className="cc-ftt-policy-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cc-ftt-policy-title"
+          >
+            <div className="cc-ftt-policy-icon"><MessageCircleMore size={24} /></div>
+            <h2 id="cc-ftt-policy-title">Welcome to Free to Talk!!</h2>
+            <p className="cc-ftt-policy-notice">
+              {conversation.policyNotice}
+            </p>
+            <h3>Keep the community safe</h3>
+            <ul>
+              <li>Be respectful. Harassment, threats, hate speech, spam, impersonation, doxxing, and retaliation are not allowed.</li>
+              <li>Do not share passwords, private records, confidential exam materials, or another person's personal information.</li>
+              <li>Do not post illegal or harmful material, malicious links, or content that enables wrongdoing.</li>
+              <li>Use the topic tags, keep discussions constructive, and report harmful content instead of retaliating.</li>
+              <li>Messages may be retained and reviewed for moderation. Screenshots or redistribution cannot be technically prevented.</li>
+            </ul>
+            {policyError && <p className="cc-error-box" role="alert">{policyError}</p>}
+            <button
+              type="button"
+              className="cc-btn cc-btn-primary"
+              disabled={policyAccepting}
+              onClick={acceptSafetyNotice}
+            >
+              {policyAccepting ? 'Saving acknowledgement...' : 'I understand — enter Whisper'}
+            </button>
+          </section>
+        </div>
+      )}
+
+      {showModerationPanel && (
+        <FreeToTalkModerationPanel
+          conversation={conversation}
+          currentUser={currentUser}
+          onClose={() => setShowModerationPanel(false)}
+        />
+      )}
+      {showAppealsPanel && (
+        <FreeToTalkAppeals onClose={() => setShowAppealsPanel(false)} />
       )}
     </div>
   )

@@ -5,6 +5,7 @@ import {
   GraduationCap,
   BookOpen,
   Bell,
+  MessageCircleMore,
   Settings,
   Plus,
   ArrowLeft,
@@ -26,13 +27,15 @@ import { getSocket, connectSocket } from '../../services/socket'
 
 export default function CommunicationDashboard({ currentUser, onProfileUpdated }) {
   // Navigation tabs in the Communication Module
-  // 'CHATS' | 'FACULTY_DIR' | 'STUDENT_DIR' | 'ANNOUNCEMENTS' | 'SETTINGS'
+  // 'CHATS' | 'FACULTY_DIR' | 'STUDENT_DIR' | 'ANNOUNCEMENTS' | 'WHISPER' | 'SETTINGS'
   const [activeTab, setActiveTab] = useState('CHATS')
 
   // Conversations state
   const [conversations, setConversations] = useState([])
   const [activeConversation, setActiveConversation] = useState(null)
   const [loadingConversations, setLoadingConversations] = useState(true)
+  const [whisperLoading, setWhisperLoading] = useState(false)
+  const [whisperError, setWhisperError] = useState('')
 
   // Modals state
   const [showCreateGroup, setShowCreateGroup] = useState(false)
@@ -42,9 +45,6 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
   // Mobile responsiveness
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
 
-  // Online users set from Socket.IO
-  const [onlineUserIds, setOnlineUserIds] = useState(new Set())
-
   // Fetch all conversations for current user
   const fetchConversations = async (preserveActiveId = null) => {
     try {
@@ -52,13 +52,14 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
       const data = await api.getConversations()
       const convList = data.conversations || []
       setConversations(convList)
+      const chatConversations = convList.filter((conversation) => !conversation.isFreeToTalk)
 
       // Set active conversation if none or preserve
       if (preserveActiveId) {
         const found = convList.find((c) => c.id === preserveActiveId)
         if (found) setActiveConversation(found)
-      } else if (!activeConversation && convList.length > 0) {
-        setActiveConversation(convList[0])
+      } else if (!activeConversation && chatConversations.length > 0) {
+        setActiveConversation(chatConversations[0])
       }
     } catch (err) {
       console.error('Error fetching conversations:', err)
@@ -69,12 +70,8 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
 
   // Socket.IO setup & listeners
   useEffect(() => {
-    connectSocket(currentUser)
+    connectSocket()
     const socket = getSocket()
-
-    const onOnlineUsers = (users) => {
-      setOnlineUserIds(new Set(users))
-    }
 
     const onNewMessage = (msg) => {
       // Dispatch custom DOM event for ChatWindow
@@ -89,6 +86,10 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
 
     const onMessageDeleted = (data) => {
       window.dispatchEvent(new CustomEvent('cc_socket_message_deleted', { detail: data }))
+    }
+
+    const onMessageModerated = (data) => {
+      window.dispatchEvent(new CustomEvent('cc_socket_message_moderated', { detail: data }))
     }
 
     const onMessagePinned = (data) => {
@@ -107,10 +108,10 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
       fetchConversations(conv.id)
     }
 
-    socket.on('online_users', onOnlineUsers)
     socket.on('new_message', onNewMessage)
     socket.on('message_edited', onMessageEdited)
     socket.on('message_deleted', onMessageDeleted)
+    socket.on('message_moderated', onMessageModerated)
     socket.on('message_pinned', onMessagePinned)
     socket.on('user_typing', onUserTyping)
     socket.on('user_stopped_typing', onUserStoppedTyping)
@@ -119,10 +120,10 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
     fetchConversations()
 
     return () => {
-      socket.off('online_users', onOnlineUsers)
       socket.off('new_message', onNewMessage)
       socket.off('message_edited', onMessageEdited)
       socket.off('message_deleted', onMessageDeleted)
+      socket.off('message_moderated', onMessageModerated)
       socket.off('message_pinned', onMessagePinned)
       socket.off('user_typing', onUserTyping)
       socket.off('user_stopped_typing', onUserStoppedTyping)
@@ -132,9 +133,18 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
 
   // Handlers for switching views & opening chats
   const handleSelectConversation = (conv) => {
+    if (conv.isFreeToTalk) return
     setActiveConversation(conv)
     setActiveTab('CHATS')
     setMobileChatOpen(true)
+  }
+
+  const openChats = () => {
+    if (activeConversation?.isFreeToTalk) {
+      setActiveConversation(conversations.find((conversation) => !conversation.isFreeToTalk) || null)
+    }
+    setActiveTab('CHATS')
+    setMobileChatOpen(false)
   }
 
   const handleStartConversationFromDirectory = (conv) => {
@@ -151,7 +161,35 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
     fetchConversations(newConv.id)
   }
 
-  const totalUnreadCount = conversations.reduce(
+  const openFreeToTalk = async () => {
+    setActiveTab('WHISPER')
+    setWhisperLoading(true)
+    setWhisperError('')
+    try {
+      let freeToTalk = conversations.find((conversation) => conversation.isFreeToTalk)
+      if (!freeToTalk) {
+        const data = await api.getConversations()
+        const convList = data.conversations || []
+        setConversations(convList)
+        freeToTalk = convList.find((conversation) => conversation.isFreeToTalk)
+      }
+      if (!freeToTalk) {
+        setWhisperError('Whisper is not available for this account.')
+        return
+      }
+      setActiveConversation(freeToTalk)
+      setMobileChatOpen(true)
+    } catch (err) {
+      console.error('Could not open Free to Talk:', err)
+      setWhisperError(err.message || 'Whisper could not be loaded.')
+    } finally {
+      setWhisperLoading(false)
+    }
+  }
+
+  const chatConversations = conversations.filter((conversation) => !conversation.isFreeToTalk)
+  const freeToTalkConversation = conversations.find((conversation) => conversation.isFreeToTalk)
+  const totalUnreadCount = chatConversations.reduce(
     (acc, c) => acc + (c.unreadCount || 0),
     0
   )
@@ -162,7 +200,7 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
       <nav className="cc-comm-subnav">
         <button
           className={`cc-subnav-item ${activeTab === 'CHATS' ? 'active' : ''}`}
-          onClick={() => setActiveTab('CHATS')}
+          onClick={openChats}
           title="All Chats"
         >
           <div className="cc-subnav-icon-wrap">
@@ -208,6 +246,22 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
         </button>
 
         <button
+          className={`cc-subnav-item ${activeTab === 'WHISPER' ? 'active' : ''}`}
+          onClick={openFreeToTalk}
+          title="Free to Talk — anonymous community chat"
+          aria-label="Whisper — Free to Talk"
+          disabled={whisperLoading}
+        >
+          <div className="cc-subnav-icon-wrap">
+            <MessageCircleMore size={20} />
+            {freeToTalkConversation?.unreadCount > 0 && (
+              <span className="cc-subnav-badge">{freeToTalkConversation.unreadCount}</span>
+            )}
+          </div>
+          <span>Whisper</span>
+        </button>
+
+        <button
           className={`cc-subnav-item ${activeTab === 'SETTINGS' ? 'active' : ''}`}
           onClick={() => setActiveTab('SETTINGS')}
           title="Communication Preferences"
@@ -226,7 +280,7 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
             {/* Conversations Column */}
             <div className="cc-conv-col">
               <ConversationList
-                conversations={conversations}
+                conversations={chatConversations}
                 activeConversationId={activeConversation?.id}
                 onSelectConversation={handleSelectConversation}
                 onOpenCreateGroup={() => setShowCreateGroup(true)}
@@ -250,10 +304,14 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
 
               {activeConversation ? (
                 <ChatWindow
+                  key={activeConversation.id}
                   conversation={activeConversation}
                   currentUser={currentUser}
                   onOpenGroupInfo={() => setShowGroupInfo(true)}
-                  onOpenReportModal={(msg) => setReportingMessage(msg)}
+                  onOpenReportModal={(msg) => setReportingMessage({
+                    ...msg,
+                    isFreeToTalk: activeConversation.isFreeToTalk,
+                  })}
                   onConversationUpdated={() => fetchConversations(activeConversation.id)}
                 />
               ) : (
@@ -266,6 +324,39 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'WHISPER' && (
+          <div className="cc-chats-split-layout cc-whisper-layout">
+            {whisperLoading ? (
+              <div className="cc-loading-center">
+                <div className="cc-spinner" />
+                <p>Opening Whisper...</p>
+              </div>
+            ) : whisperError ? (
+              <div className="cc-tag-filter-state" role="alert">
+                <h3>Whisper could not be opened</h3>
+                <p>{whisperError}</p>
+                <button type="button" className="cc-btn cc-btn-secondary cc-btn-xs" onClick={openFreeToTalk}>
+                  Try again
+                </button>
+              </div>
+            ) : activeConversation?.isFreeToTalk ? (
+              <div className="cc-chat-col">
+                <ChatWindow
+                  key={activeConversation.id}
+                  conversation={activeConversation}
+                  currentUser={currentUser}
+                  onOpenGroupInfo={() => setShowGroupInfo(true)}
+                  onOpenReportModal={(msg) => setReportingMessage({
+                    ...msg,
+                    isFreeToTalk: true,
+                  })}
+                  onConversationUpdated={() => fetchConversations(activeConversation.id)}
+                />
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -319,6 +410,7 @@ export default function CommunicationDashboard({ currentUser, onProfileUpdated }
       {reportingMessage && (
         <ReportModal
           message={reportingMessage}
+          isAnonymous={reportingMessage.isFreeToTalk}
           onClose={() => setReportingMessage(null)}
           onReportSuccess={() => {
             fetchConversations(activeConversation?.id)

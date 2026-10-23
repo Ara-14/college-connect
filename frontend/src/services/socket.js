@@ -11,19 +11,11 @@ export const getSocket = () => {
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       withCredentials: true,
+      auth: { token: localStorage.getItem('cc_auth_token') },
     })
 
     socket.on('connect', () => {
       console.log('⚡ Socket connected:', socket.id)
-      const storedUser = localStorage.getItem('cc_auth_user')
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser)
-          socket.emit('register_user', user.id)
-        } catch (e) {
-          // ignore
-        }
-      }
     })
 
     socket.on('disconnect', (reason) => {
@@ -33,13 +25,11 @@ export const getSocket = () => {
   return socket
 }
 
-export const connectSocket = (user) => {
+export const connectSocket = () => {
   const s = getSocket()
+  s.auth = { token: localStorage.getItem('cc_auth_token') }
   if (!s.connected) {
     s.connect()
-  }
-  if (user && user.id) {
-    s.emit('register_user', user.id)
   }
 }
 
@@ -64,23 +54,16 @@ export const leaveConversationRoom = (conversationId) => {
   }
 }
 
-export const emitTypingStart = (conversationId, user) => {
+export const emitTypingStart = (conversationId) => {
   const s = getSocket()
-  if (s && s.connected && conversationId && user) {
-    s.emit('typing_start', {
-      conversationId,
-      userId: user.id,
-      userName: user.fullName,
-    })
+  if (s && s.connected && conversationId) {
+    s.emit('typing_start', { conversationId })
   }
 }
 
-export const emitTypingStop = (conversationId, user) => {
+export const emitTypingStop = (conversationId) => {
   const s = getSocket()
-  if (s && s.connected && conversationId && user) {
-    s.emit('typing_stop', {
-      conversationId,
-      userId: user.id,
-    })
+  if (s && s.connected && conversationId) {
+    s.emit('typing_stop', { conversationId })
   }
 }

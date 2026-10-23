@@ -53,6 +53,12 @@ model User {
   messagesSent          Message[]
   messageReadReceipts   MessageReadReceipt[]
   messageReports        MessageReport[]
+  moderationActions     MessageModerationAction[] @relation("ModerationActor")
+  moderatedTargets      MessageModerationAction[] @relation("ModerationTarget")
+  appeals               MessageAppeal[] @relation("AppealUser")
+  reviewedAppeals       MessageAppeal[] @relation("AppealReviewer")
+  auditActions          AccessAuditLog[] @relation("AuditActor")
+  auditedSubjects       AccessAuditLog[] @relation("AuditSubject")
   blockedUsers          UserBlock[]          @relation("UserBlocker")
   blockedByUsers        UserBlock[]          @relation("UserBlocked")
 
@@ -195,6 +201,9 @@ model Conversation {
   isFacultyOnly   Boolean              @default(false)
   isReadOnly      Boolean              @default(false) // e.g. Announcement channels
   pinnedMessageId String?
+  freeToTalkKey   String?              @unique
+  messageRateLimitSeconds Int           @default(3)
+  reportReviewHours Int                @default(48)
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
@@ -217,6 +226,9 @@ model ConversationMember {
   isArchived     Boolean      @default(false)
   lastReadAt     DateTime     @default(now())
   joinedAt       DateTime     @default(now())
+  acceptedPolicyVersion String?
+  messagingRestrictedUntil DateTime?
+  lastMessageAt  DateTime?
 
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -232,10 +244,12 @@ model Message {
   senderId            String
   content             String               @db.Text
   messageType         String               @default("TEXT") // TEXT, FILE, IMAGE, ANNOUNCEMENT, SYSTEM
+  tags                String[]             @default([])
   replyToId           String?
   isEdited            Boolean              @default(false)
   isPinned            Boolean              @default(false)
   isDeleted           Boolean              @default(false)
+  isHidden            Boolean              @default(false)
   queryCategory       String?              // "Assignment Help", "Project Guidance", "Exam Query", "General"
   isRead              Boolean              @default(false)
   createdAt           DateTime             @default(now())
@@ -248,12 +262,14 @@ model Message {
   attachments         MessageAttachment[]
   readReceipts        MessageReadReceipt[]
   reports             MessageReport[]
+  moderationActions   MessageModerationAction[]
   pinnedInConversations Conversation[]     @relation("PinnedConversationMessage")
 
   @@index([conversationId])
   @@index([senderId])
   @@index([replyToId])
   @@index([createdAt])
+  @@index([tags], type: Gin)
 }
 
 model MessageAttachment {
@@ -289,15 +305,75 @@ model MessageReport {
   id           String   @id @default(uuid())
   messageId    String
   reportedById String
+  category     String   @default("INAPPROPRIATE_CONTENT")
   reason       String   @db.Text
   status       String   @default("PENDING") // PENDING, RESOLVED, DISMISSED
   createdAt    DateTime @default(now())
+  reviewedAt   DateTime?
 
   message      Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   reportedBy   User     @relation(fields: [reportedById], references: [id], onDelete: Cascade)
 
+  @@unique([messageId, reportedById])
   @@index([messageId])
   @@index([reportedById])
+  @@index([status, createdAt])
+}
+
+model MessageModerationAction {
+  id               String   @id @default(uuid())
+  messageId        String
+  actorId          String
+  targetUserId     String?
+  action           String
+  reason           String   @db.Text
+  restrictionUntil DateTime?
+  createdAt        DateTime @default(now())
+
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  actor      User     @relation("ModerationActor", fields: [actorId], references: [id], onDelete: Restrict)
+  targetUser User?    @relation("ModerationTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  appeals    MessageAppeal[]
+
+  @@index([messageId, createdAt])
+  @@index([targetUserId, createdAt])
+}
+
+model MessageAppeal {
+  id           String   @id @default(uuid())
+  actionId     String
+  userId       String
+  reason       String   @db.Text
+  status       String   @default("PENDING")
+  response     String?  @db.Text
+  reviewedById String?
+  createdAt    DateTime @default(now())
+  reviewedAt   DateTime?
+
+  action     MessageModerationAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  user       User     @relation("AppealUser", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User?    @relation("AppealReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@unique([actionId, userId])
+}
+
+model AccessAuditLog {
+  id        String   @id @default(uuid())
+  actorId   String
+  subjectId String?
+  action    String
+  reason    String   @db.Text
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor   User  @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  subject User? @relation("AuditSubject", fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([subjectId, createdAt])
+  @@index([action, createdAt])
 }
 
 model UserBlock {

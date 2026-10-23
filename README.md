@@ -57,6 +57,11 @@ From the project root directory:
 docker compose up --build
 ```
 
+On first run, create the database tables from the Prisma schema. Run this again after pulling schema updates (including chat message tags and Free to Talk moderation data) to sync PostgreSQL:
+```powershell
+docker compose exec backend npm run prisma:push
+```
+
 - **Frontend:** [http://localhost:5173](http://localhost:5173)
 - **Backend API:** [http://localhost:5000](http://localhost:5000)
 - **Health Check:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
@@ -81,8 +86,11 @@ docker run --name collegeconnect_postgres -e POSTGRES_PASSWORD=postgres -e POSTG
 cd backend
 npm install
 npx prisma generate
+npm run prisma:push
 npm run dev
 ```
+
+The backend defaults to `postgresql://postgres:postgres@localhost:5432/collegeconnect` in development. Set `DATABASE_URL` in `backend/.env` to override it.
 
 #### 3. Start Frontend
 ```powershell

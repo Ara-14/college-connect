@@ -46,6 +46,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body,
+.app-layout,
+.app-layout *,
+.login-page {
+  transition:
+    background-color 300ms cubic-bezier(0.2, 0.65, 0.3, 1),
+    color 300ms cubic-bezier(0.2, 0.65, 0.3, 1),
+    border-color 300ms cubic-bezier(0.2, 0.65, 0.3, 1),
+    box-shadow 300ms cubic-bezier(0.2, 0.65, 0.3, 1);
+}
+
 button,
 input,
 select,
@@ -2194,6 +2205,28 @@ h4 {
     padding: 12px 16px;
   }
 
+  .header-action-group {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .profile-switcher-wrapper {
+    display: none;
+  }
+
+  .feed-switch-btn {
+    padding: 9px 12px;
+  }
+
+  .feed-switch-btn span,
+  .faculty-upload-trigger-btn span {
+    display: none;
+  }
+
+  .faculty-upload-trigger-btn {
+    padding: 10px;
+  }
+
   .dashboard-content {
     padding: 14px 14px 80px;
   }
@@ -2825,7 +2858,7 @@ h4 {
   border-left: 3px solid var(--accent-green);
 }
 
-.app-layout {
+.app-layout:not([data-theme='dark']) {
   --bg-app: #f4f7f4;
   --bg-sidebar: #ffffff;
   --bg-card: #ffffff;
@@ -2838,233 +2871,561 @@ h4 {
   color: var(--text-main);
 }
 
-.app-layout .sidebar {
+.app-layout:not([data-theme='dark']) .sidebar {
   background: #fff;
   border-right-color: #e4ebe5;
   box-shadow: 4px 0 20px rgba(34, 68, 43, 0.035);
 }
 
-.app-layout .brand strong,
-.app-layout .sidebar-user-info strong,
-.app-layout .greeting-name,
-.app-layout .courses-section-header h3,
-.app-layout .page-panel h2,
-.app-layout .vault-course-header h3,
-.app-layout .post-author strong,
-.app-layout .post-details strong,
-.app-layout .schedule-info strong,
-.app-layout .chat-list h3,
-.app-layout .right-heading h3,
-.app-layout .campus-card h3 {
+.app-layout:not([data-theme='dark']) .brand strong,
+.app-layout:not([data-theme='dark']) .sidebar-user-info strong,
+.app-layout:not([data-theme='dark']) .greeting-name,
+.app-layout:not([data-theme='dark']) .courses-section-header h3,
+.app-layout:not([data-theme='dark']) .page-panel h2,
+.app-layout:not([data-theme='dark']) .vault-course-header h3,
+.app-layout:not([data-theme='dark']) .post-author strong,
+.app-layout:not([data-theme='dark']) .post-details strong,
+.app-layout:not([data-theme='dark']) .schedule-info strong,
+.app-layout:not([data-theme='dark']) .chat-list h3,
+.app-layout:not([data-theme='dark']) .right-heading h3,
+.app-layout:not([data-theme='dark']) .campus-card h3 {
   color: #26382b;
 }
 
-.app-layout .sidebar-section-label,
-.app-layout .greeting-sub,
-.app-layout .sidebar-channels button,
-.app-layout .feed-switch-btn,
-.app-layout .notification-bell-btn {
+.app-layout:not([data-theme='dark']) .sidebar-section-label,
+.app-layout:not([data-theme='dark']) .greeting-sub,
+.app-layout:not([data-theme='dark']) .sidebar-channels button,
+.app-layout:not([data-theme='dark']) .feed-switch-btn,
+.app-layout:not([data-theme='dark']) .notification-bell-btn {
   color: #758278;
 }
 
-.app-layout .nav-item {
+.app-layout:not([data-theme='dark']) .nav-item {
   color: #67756b;
 }
 
-.app-layout .nav-item:hover,
-.app-layout .sidebar-channels button:hover {
+.app-layout:not([data-theme='dark']) .nav-item:hover,
+.app-layout:not([data-theme='dark']) .sidebar-channels button:hover {
   background: #f3f7f3;
   color: #26382b;
 }
 
-.app-layout .nav-item.active {
+.app-layout:not([data-theme='dark']) .nav-item.active {
   background: #eaf6ed;
   color: #14743f;
 }
 
-.app-layout .sidebar-channels button.active-channel {
+.app-layout:not([data-theme='dark']) .sidebar-channels button.active-channel {
   background: #edf6ef;
   color: #24643b;
 }
 
-.app-layout .sidebar-bottom {
+.app-layout:not([data-theme='dark']) .sidebar-bottom {
   background: #f6f9f6;
   border-color: #e5ece6;
 }
 
-.app-layout .main-area {
+.app-layout:not([data-theme='dark']) .main-area {
   background: #f4f7f4;
 }
 
-.app-layout .feed-header-bar {
+.app-layout:not([data-theme='dark']) .feed-header-bar {
   background: rgba(255, 255, 255, 0.94);
   border-bottom-color: #e5ece6;
   box-shadow: 0 3px 14px rgba(31, 60, 39, 0.035);
 }
 
-.app-layout .mobile-menu {
+.app-layout:not([data-theme='dark']) .mobile-menu {
   color: #34473a;
 }
 
-.app-layout .header-avatar {
+.app-layout:not([data-theme='dark']) .header-avatar {
   border-color: #fff;
 }
 
-.app-layout .feed-switch-btn,
-.app-layout .notification-bell-btn {
+.app-layout:not([data-theme='dark']) .feed-switch-btn,
+.app-layout:not([data-theme='dark']) .notification-bell-btn {
   background: #f6f9f6;
   border-color: #e4ebe5;
 }
 
-.app-layout .feed-switch-btn:hover,
-.app-layout .notification-bell-btn:hover {
+.app-layout:not([data-theme='dark']) .feed-switch-btn:hover,
+.app-layout:not([data-theme='dark']) .notification-bell-btn:hover {
   background: #edf6ef;
   color: #176f3e;
 }
 
-.app-layout .dashboard-content {
+.app-layout:not([data-theme='dark']) .dashboard-content {
   background: #f4f7f4;
 }
 
-.app-layout .feed-mode-tabs {
+.app-layout:not([data-theme='dark']) .feed-mode-tabs {
   background: #eaf0eb;
   border-color: #e0e8e1;
 }
 
-.app-layout .mode-tab {
+.app-layout:not([data-theme='dark']) .mode-tab {
   color: #68776b;
 }
 
-.app-layout .mode-tab.active {
+.app-layout:not([data-theme='dark']) .mode-tab.active {
   background: #fff;
   color: #176f3e;
 }
 
-.app-layout .vault-course-card,
-.app-layout .vault-resource-item,
-.app-layout .drawer-resource-card,
-.app-layout .schedule-item,
-.app-layout .chat-list,
-.app-layout .messages-layout,
-.app-layout .create-modal {
+.app-layout:not([data-theme='dark']) .vault-course-card,
+.app-layout:not([data-theme='dark']) .vault-resource-item,
+.app-layout:not([data-theme='dark']) .drawer-resource-card,
+.app-layout:not([data-theme='dark']) .schedule-item,
+.app-layout:not([data-theme='dark']) .chat-list,
+.app-layout:not([data-theme='dark']) .messages-layout,
+.app-layout:not([data-theme='dark']) .create-modal {
   background: #fff;
 }
 
-.app-layout .vault-course-header h3,
-.app-layout .res-details strong,
-.app-layout .post-details p,
-.app-layout .schedule-info strong {
+.app-layout:not([data-theme='dark']) .vault-course-header h3,
+.app-layout:not([data-theme='dark']) .res-details strong,
+.app-layout:not([data-theme='dark']) .post-details p,
+.app-layout:not([data-theme='dark']) .schedule-info strong {
   color: #34463a;
 }
 
-.app-layout .res-details span,
-.app-layout .comment-line,
-.app-layout .progress-labels,
-.app-layout .chat-person {
+.app-layout:not([data-theme='dark']) .res-details span,
+.app-layout:not([data-theme='dark']) .comment-line,
+.app-layout:not([data-theme='dark']) .progress-labels,
+.app-layout:not([data-theme='dark']) .chat-person {
   color: #68776b;
 }
 
-.app-layout .form-group label,
-.app-layout .modal-title-with-badge h2,
-.app-layout .file-drop-zone strong {
+.app-layout:not([data-theme='dark']) .form-group label,
+.app-layout:not([data-theme='dark']) .modal-title-with-badge h2,
+.app-layout:not([data-theme='dark']) .file-drop-zone strong {
   color: #34463a;
 }
 
-.app-layout .form-group select,
-.app-layout .form-group input,
-.app-layout .chat-input input {
+.app-layout:not([data-theme='dark']) .form-group select,
+.app-layout:not([data-theme='dark']) .form-group input,
+.app-layout:not([data-theme='dark']) .chat-input input {
   background: #fff;
   border-color: #d9e4db;
   color: #27352b;
 }
 
-.app-layout .form-group select option {
+.app-layout:not([data-theme='dark']) .form-group select option {
   background: #fff;
   color: #27352b;
 }
 
-.app-layout .file-drop-zone {
+.app-layout:not([data-theme='dark']) .file-drop-zone {
   border-color: #cddbd0;
   background: #f8fbf8;
 }
 
-.app-layout .post-card,
-.app-layout .right-card {
+.app-layout:not([data-theme='dark']) .post-card,
+.app-layout:not([data-theme='dark']) .right-card {
   box-shadow: 0 5px 20px rgba(34, 68, 43, 0.045);
 }
 
-.app-layout .post-author span,
-.app-layout .footer-note {
+.app-layout:not([data-theme='dark']) .post-author span,
+.app-layout:not([data-theme='dark']) .footer-note {
   color: #758278;
 }
 
-.app-layout .icon-button,
-.app-layout .comment-form input,
-.app-layout .chat-header,
-.app-layout .chat-empty {
+.app-layout:not([data-theme='dark']) .icon-button,
+.app-layout:not([data-theme='dark']) .comment-form input,
+.app-layout:not([data-theme='dark']) .chat-header,
+.app-layout:not([data-theme='dark']) .chat-empty {
   color: #526256;
 }
 
-.app-layout .icon-button:hover {
+.app-layout:not([data-theme='dark']) .icon-button:hover {
   color: #176f3e;
 }
 
-.app-layout .comment-form input::placeholder {
+.app-layout:not([data-theme='dark']) .comment-form input::placeholder {
   color: #8b988e;
 }
 
-.app-layout .study-companion-card {
+.app-layout:not([data-theme='dark']) .study-companion-card {
   background: linear-gradient(135deg, #eff8f0 0%, #f8faf7 100%);
   border-color: #dce9de;
 }
 
-.app-layout .companion-header,
-.app-layout .study-companion-card p {
+.app-layout:not([data-theme='dark']) .companion-header,
+.app-layout:not([data-theme='dark']) .study-companion-card p {
   color: #526256;
 }
 
-.app-layout .campus-card {
+.app-layout:not([data-theme='dark']) .campus-card {
   background: #fff;
 }
 
-.app-layout .campus-card button {
+.app-layout:not([data-theme='dark']) .campus-card button {
   background: #eaf6ed;
   color: #176f3e;
 }
 
-.app-layout .schedule-status {
+.app-layout:not([data-theme='dark']) .schedule-status {
   background: #f1f5f2;
   color: #5f6f63;
 }
 
-.app-layout .schedule-status.live {
+.app-layout:not([data-theme='dark']) .schedule-status.live {
   background: #e4f5e8;
   color: #14743f;
 }
 
-.app-layout .chat-person.selected {
+.app-layout:not([data-theme='dark']) .chat-person.selected {
   background: #eaf6ed;
   color: #176f3e;
 }
 
-.app-layout .chat-input {
+.app-layout:not([data-theme='dark']) .chat-input {
   background: #fff;
 }
 
-.app-layout .mobile-bottom-nav {
+.app-layout:not([data-theme='dark']) .mobile-bottom-nav {
   background: rgba(255, 255, 255, 0.96);
   border-top-color: #e2e9e3;
 }
 
-.app-layout .bottom-nav-item {
+.app-layout:not([data-theme='dark']) .bottom-nav-item {
   color: #758278;
 }
 
-.app-layout .bottom-nav-item.active,
-.app-layout .bottom-nav-item.active svg {
+.app-layout:not([data-theme='dark']) .bottom-nav-item.active,
+.app-layout:not([data-theme='dark']) .bottom-nav-item.active svg {
   color: #168148;
 }
 
-.app-layout .modal-overlay {
+.app-layout:not([data-theme='dark']) .modal-overlay {
   background: rgba(20, 35, 24, 0.36);
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+html[data-theme='dark'] body {
+  background: #030604;
+  color: #f5f7f5;
+}
+
+html[data-theme='dark'] .login-page {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.025) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.035) 0%, transparent 40%),
+    linear-gradient(180deg, #111111 0%, #080808 48%, #030303 100%);
+}
+
+html[data-theme='dark'] .login-card {
+  background: rgba(17, 17, 17, 0.97);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.38);
+}
+
+html[data-theme='dark'] .login-card h1,
+html[data-theme='dark'] .login-card h2 {
+  color: #f5f7f5;
+}
+
+html[data-theme='dark'] .subtitle,
+html[data-theme='dark'] .signup-text {
+  color: #b7c8bb;
+}
+
+html[data-theme='dark'] .role-switch-container,
+html[data-theme='dark'] .demo-accounts-box {
+  background: #151515;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme='dark'] .role-tab {
+  color: #b7c8bb;
+}
+
+html[data-theme='dark'] .role-tab.active {
+  background: #18a45b;
+  color: #fff;
+}
+
+html[data-theme='dark'] .login-card form input {
+  background: #0b0b0b;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #f5f7f5;
+}
+
+html[data-theme='dark'] .login-card form input::placeholder {
+  color: #aab2ac;
+}
+
+html[data-theme='dark'] .login-options {
+  color: #c5d1c8;
+}
+
+html[data-theme='dark'] .login-options a,
+html[data-theme='dark'] .signup-text a {
+  color: #70d38f;
+}
+
+html[data-theme='dark'] .demo-account-chip {
+  background: #0b0b0b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f5f7f5;
+}
+
+html[data-theme='dark'] .demo-account-chip strong {
+  color: #f5f7f5;
+}
+
+html[data-theme='dark'] .demo-account-chip small {
+  color: #aab2ac;
+}
+
+html[data-theme='dark'] .login-tide-intro {
+  background: #030303;
+}
+
+html[data-theme='dark'] .app-layout {
+  --bg-app: #080808;
+  --bg-sidebar: #0b0b0b;
+  --bg-card: #121212;
+  --bg-card-hover: #1b1b1b;
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-light: rgba(255, 255, 255, 0.16);
+  --text-main: #f5f5f5;
+  --text-muted: #a8a8a8;
+  --hero-green-start: #111111;
+  --hero-green-end: #1b1b1b;
+  --pastel-sage: #111111;
+  --pastel-sage-border: rgba(255, 255, 255, 0.1);
+  --pastel-peach: #141414;
+  --pastel-peach-border: rgba(255, 255, 255, 0.1);
+  --pastel-mint: #121212;
+  --pastel-mint-border: rgba(255, 255, 255, 0.1);
+  background: var(--bg-app);
+  color: var(--text-main);
+}
+
+html[data-theme='dark'] .app-layout .sidebar {
+  background: #0b0b0b;
+  border-right-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .app-layout .main-area,
+html[data-theme='dark'] .app-layout .dashboard-content {
+  background: #080808;
+}
+
+html[data-theme='dark'] .app-layout .feed-header-bar {
+  background: rgba(7, 7, 7, 0.97);
+  border-bottom-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .app-layout .right-card,
+html[data-theme='dark'] .app-layout .page-panel,
+html[data-theme='dark'] .app-layout .vault-course-card,
+html[data-theme='dark'] .app-layout .vault-resource-item,
+html[data-theme='dark'] .app-layout .drawer-resource-card,
+html[data-theme='dark'] .app-layout .schedule-item,
+html[data-theme='dark'] .app-layout .chat-list,
+html[data-theme='dark'] .app-layout .messages-layout,
+html[data-theme='dark'] .app-layout .create-modal {
+  background: #111111;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+html[data-theme='dark'] .app-layout .study-companion-card {
+  background: linear-gradient(135deg, #171717 0%, #101010 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme='dark'] .app-layout .mobile-bottom-nav {
+  background: rgba(8, 8, 8, 0.98);
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme='dark'] .app-layout .modern-search-bar,
+html[data-theme='dark'] .app-layout .chip-button {
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme='dark'] .app-layout .modern-search-bar input,
+html[data-theme='dark'] .app-layout .chip-label,
+html[data-theme='dark'] .app-layout .course-title,
+html[data-theme='dark'] .app-layout .course-percent {
+  color: #f5f7f5;
+}
+
+html[data-theme='dark'] .app-layout .search-icon-svg,
+html[data-theme='dark'] .app-layout .modern-search-bar input::placeholder,
+html[data-theme='dark'] .app-layout .chip-arrow,
+html[data-theme='dark'] .app-layout .course-desc,
+html[data-theme='dark'] .app-layout .course-resources-footer {
+  color: #aab2ac;
+}
+
+html[data-theme='dark'] .app-layout .mode-tab.active {
+  background: #262626;
+  color: #f5f7f5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme='dark'] .app-layout .learning-hero-card {
+  color: #f5f7f5;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+}
+
+html[data-theme='dark'] .app-layout .hero-tag,
+html[data-theme='dark'] .app-layout .hero-title,
+html[data-theme='dark'] .app-layout .hero-desc,
+html[data-theme='dark'] .app-layout .hero-progress-label {
+  color: #f5f7f5;
+}
+
+html[data-theme='dark'] .app-layout .hero-progress-bar {
+  background: #0c2919;
+}
+
+html[data-theme='dark'] .app-layout .course-card {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme='dark'] .app-layout .course-card .status-pill {
+  background: #222222;
+  color: #d4d4d4;
+}
+
+html[data-theme='dark'] .app-layout .course-card.peach .status-pill {
+  background: #222222;
+  color: #d4d4d4;
+}
+
+html[data-theme='dark'] .app-layout .course-progress-track {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-main);
+}
+
+.theme-setting-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.theme-setting-copy strong {
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.theme-setting-copy span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.theme-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 62px;
+  height: 36px;
+  padding: 4px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(24, 164, 91, 0.35);
+  border-radius: 999px;
+  background: #e7f3e9;
+  transition:
+    background-color 300ms cubic-bezier(0.2, 0.65, 0.3, 1),
+    box-shadow 200ms ease,
+    transform 160ms ease;
+}
+
+.theme-toggle:hover {
+  box-shadow: 0 0 0 4px rgba(24, 164, 91, 0.13), 0 0 18px rgba(24, 164, 91, 0.22);
+}
+
+.theme-toggle:active {
+  transform: scale(0.96);
+}
+
+.theme-toggle:focus-visible {
+  outline: 3px solid #18a45b;
+  outline-offset: 3px;
+}
+
+.theme-toggle.is-dark {
+  background: #202020;
+}
+
+.theme-toggle-thumb {
+  position: relative;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: #18a45b;
+  color: #fff;
+  transform: translateX(0);
+  transition:
+    transform 300ms cubic-bezier(0.2, 0.65, 0.3, 1),
+    background-color 300ms ease;
+}
+
+.theme-toggle.is-dark .theme-toggle-thumb {
+  transform: translateX(26px);
+  background: #18a45b;
+}
+
+.theme-toggle-icon {
+  position: absolute;
+  transition:
+    opacity 260ms ease,
+    transform 300ms cubic-bezier(0.2, 0.65, 0.3, 1);
+}
+
+.theme-toggle-sun {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+
+.theme-toggle-moon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.65);
+}
+
+.theme-toggle.is-dark .theme-toggle-sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.65);
+}
+
+.theme-toggle.is-dark .theme-toggle-moon {
+  opacity: 1;
+  transform: rotate(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  .app-layout,
+  .app-layout *,
+  .login-page,
+  .theme-toggle,
+  .theme-toggle-thumb,
+  .theme-toggle-icon {
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,0 +1,25 @@
+export const MESSAGE_TAGS = [
+  { name: 'doubt', description: 'Ask questions or clear academic doubts.', category: 'Academic', color: '#4f79c8' },
+  { name: 'help', description: 'Request help from other students.', category: 'Academic', color: '#31845d' },
+  { name: 'assignment', description: 'Discuss assignments and submissions.', category: 'Academic', color: '#a85f2c' },
+  { name: 'notes', description: 'Share class notes and study materials.', category: 'Academic', color: '#7352a8' },
+  { name: 'exam', description: 'Discuss exams and preparation.', category: 'Academic', color: '#b44350' },
+  { name: 'important', description: 'Highlight important academic information.', category: 'Academic', color: '#9b7114' },
+  { name: 'project', description: 'Discuss college projects.', category: 'Academic', color: '#267b8b' },
+  { name: 'lab', description: 'Discuss laboratory work and practicals.', category: 'Academic', color: '#a34283' },
+  { name: 'resources', description: 'Share useful learning resources.', category: 'Academic', color: '#45688e' },
+  { name: 'placement', description: 'Share placement and interview information.', category: 'Academic', color: '#367746' },
+  { name: 'announcement', description: 'Share important updates.', category: 'Communication', color: '#a84639' },
+  { name: 'discussion', description: 'Start a group discussion.', category: 'Communication', color: '#6252a0' },
+  { name: 'studygroup', description: 'Find students interested in studying together.', category: 'Communication', color: '#247969' },
+  { name: 'event', description: 'Discuss college events and activities.', category: 'Communication', color: '#a75b2c' },
+  { name: 'meeting', description: 'Coordinate meetings and group work.', category: 'Communication', color: '#3f62a2' },
+  { name: 'urgent', description: 'Mark time-sensitive messages.', category: 'Communication', color: '#bd3e3e' },
+  { name: 'lostfound', description: 'Report lost or found campus items.', category: 'Communication', color: '#78642e' },
+  { name: 'recommendation', description: 'Ask for or share recommendations.', category: 'Communication', color: '#99466d' },
+  { name: 'academic', description: 'Academic discussions and learning.', category: 'Academic', color: '#396fa8' },
+  { name: 'feedback', description: 'Share constructive feedback.', category: 'Communication', color: '#a04e78' },
+  { name: 'general', description: 'General community discussion.', category: 'Communication', color: '#61734a' },
+]
+
+export const MESSAGE_TAG_NAMES = MESSAGE_TAGS.map(({ name }) => name)
