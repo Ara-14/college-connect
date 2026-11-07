@@ -7,6 +7,7 @@ import academicRoutes from './academic.routes.js'
 import postRoutes from './post.routes.js'
 import communityRoutes from './community.routes.js'
 import aiRoutes from './ai.routes.js'
+import learningRoutes from './learning.routes.js'
 
 const apiRouter = Router()
 
@@ -16,6 +17,7 @@ apiRouter.use('/auth', authRoutes)
 apiRouter.use('/communication', communicationRoutes)
 apiRouter.use('/notifications', notificationRoutes)
 apiRouter.use('/academic', academicRoutes)
+apiRouter.use('/learning', learningRoutes)
 apiRouter.use('/posts', postRoutes)
 apiRouter.use('/communities', communityRoutes)
 apiRouter.use('/ai', aiRoutes)

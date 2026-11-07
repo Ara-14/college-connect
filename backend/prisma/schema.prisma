@@ -42,6 +42,12 @@ model User {
 
   // Academic Resources (Teacher uploads)
   uploadedResources AcademicResource[]
+  attendanceSessionsCreated AcademicAttendanceSession[] @relation("AttendanceSessionCreator")
+  attendanceMarks AcademicAttendanceMark[]
+  timetableEntriesCreated AcademicTimetableEntry[] @relation("TimetableEntryCreator")
+  resultsPublished AcademicResult[] @relation("ResultPublisher")
+  academicResults AcademicResult[] @relation("ResultStudent")
+  quizAttempts QuizAttempt[]
 
   // Follow graph
   followers       Follow[]  @relation("UserFollowers")
@@ -519,4 +525,85 @@ model AcademicResource {
   @@index([subjectId])
   @@index([uploaderId])
   @@index([category])
+}
+
+model AcademicAttendanceSession {
+  id          String   @id @default(uuid())
+  subject     String
+  semester    String
+  department  String
+  section     String   @default("")
+  classDate   DateTime
+  period      Int
+  createdAt   DateTime @default(now())
+  markedById  String
+
+  markedBy    User                   @relation("AttendanceSessionCreator", fields: [markedById], references: [id], onDelete: Cascade)
+  marks       AcademicAttendanceMark[]
+
+  @@unique([subject, semester, department, section, classDate, period])
+  @@index([semester, department, classDate])
+}
+
+model AcademicAttendanceMark {
+  id        String   @id @default(uuid())
+  sessionId String
+  studentId String
+  attended  Boolean
+
+  session   AcademicAttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student   User                     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+}
+
+model AcademicTimetableEntry {
+  id          String   @id @default(uuid())
+  department  String
+  semester    String
+  section     String?
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  subject     String
+  room        String
+  createdAt   DateTime @default(now())
+  createdById String
+
+  createdBy   User     @relation("TimetableEntryCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([department, semester, dayOfWeek])
+}
+
+model AcademicResult {
+  id          String   @id @default(uuid())
+  studentId   String
+  publishedById String
+  subject     String
+  semester    String
+  examType    String
+  score       Float
+  maxScore    Float
+  publishedAt DateTime @default(now())
+
+  student     User     @relation("ResultStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  publishedBy User     @relation("ResultPublisher", fields: [publishedById], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, subject, semester, examType])
+  @@index([studentId, semester])
+}
+
+model QuizAttempt {
+  id             String   @id @default(uuid())
+  userId         String
+  quizId         String
+  semester       String
+  score          Int
+  totalQuestions Int
+  completedAt    DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, quizId, completedAt])
 }

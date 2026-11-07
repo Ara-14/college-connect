@@ -472,4 +472,71 @@ export const api = {
     })
     return handleResponse(res)
   },
+
+  async getLearningDashboard(semester) {
+    const query = semester ? `?${new URLSearchParams({ semester }).toString()}` : ''
+    const res = await fetch(`${API_BASE_URL}/learning/dashboard${query}`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async getClassStudents(semester) {
+    const query = new URLSearchParams({ semester }).toString()
+    const res = await fetch(`${API_BASE_URL}/learning/students?${query}`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async getUnixQuizzes() {
+    const res = await fetch(`${API_BASE_URL}/learning/quizzes`, {
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async recordClassAttendance(data) {
+    const res = await fetch(`${API_BASE_URL}/learning/attendance/sessions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
+  async addTimetableEntry(data) {
+    const res = await fetch(`${API_BASE_URL}/learning/timetable`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
+  async deleteTimetableEntry(entryId) {
+    const res = await fetch(`${API_BASE_URL}/learning/timetable/${entryId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  },
+
+  async publishStudentResult(data) {
+    const res = await fetch(`${API_BASE_URL}/learning/results`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
+  async submitUnixQuiz(quizId, answers, semester) {
+    const res = await fetch(`${API_BASE_URL}/learning/quizzes/${quizId}/attempts`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ answers, semester }),
+    })
+    return handleResponse(res)
+  },
 }

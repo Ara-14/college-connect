@@ -68,7 +68,7 @@ docker compose exec backend npx prisma migrate resolve --applied 20261023000000_
 docker compose exec backend npx prisma migrate deploy
 ```
 
-The community migration adds persistent community events and links channels to their group conversations. These commands preserve existing data; do not use `prisma migrate reset`.
+The community and Academic Hub migrations add persistent community events, attendance, timetables, results, and quiz attempts. These commands preserve existing data; do not use `prisma migrate reset`.
 
 - **Frontend:** [http://localhost:5173](http://localhost:5173)
 - **Backend API:** [http://localhost:5000](http://localhost:5000)
@@ -130,4 +130,6 @@ npm run dev
 - Faculty and admins can publish course notes and official announcement messages.
 - Signed-in users can chat in community channels, share images, and record voice notes.
 - Signed-in users can publish events within community channels.
+- The Academic Hub provides semester attendance records, faculty-managed timetables and results, five module-based Unix System Programming quizzes, and class rankings. Faculty/admin accounts can record attendance, add timetable entries, and publish marks; students can view their own academic records and quiz rankings.
+- Apply the Academic Hub database migration with `npx prisma migrate deploy` (or `docker compose exec backend npx prisma migrate deploy`) before using the new academic features.
 - Personal AI answers academic questions using Gemini and Google Search citations when `GEMINI_API_KEY` is configured.

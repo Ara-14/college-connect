@@ -41,12 +41,14 @@ import {
   Award,
   EyeOff,
   RefreshCw,
+  ClipboardCheck,
 } from 'lucide-react'
 
 import './App.css'
 import CommunicationDashboard from './components/communication/CommunicationDashboard'
 import CommunityChannels from './components/CommunityChannels'
 import ThemeToggle from './components/ThemeToggle'
+import AcademicHub from './components/AcademicHub'
 import './components/communication/communication.css'
 import { api, getDefaultAvatar, getFullMediaUrl } from './services/api'
 import { connectSocket, disconnectSocket, getSocket } from './services/socket'
@@ -1132,6 +1134,18 @@ function App() {
           ))}
         </nav>
 
+        <div className="sidebar-section-label">ACADEMICS</div>
+        <nav className="sidebar-nav" aria-label="Academic navigation">
+          <button
+            className={`nav-item ${activePage === 'academic' ? 'active' : ''}`}
+            onClick={() => navigate('academic')}
+            aria-current={activePage === 'academic' ? 'page' : undefined}
+          >
+            <ClipboardCheck size={20} />
+            <span>Academic Hub</span>
+          </button>
+        </nav>
+
         <div className="sidebar-section-label">COMMUNITY CHANNELS</div>
 
         <div className="sidebar-channels">
@@ -1280,6 +1294,8 @@ function App() {
         {/* FEED / CONTENT CONTAINER */}
         <div className={`dashboard-content ${activePage === 'messages' ? 'communication-page' : ''}`}>
           <main className="content-column">
+
+            {activePage === 'academic' && <AcademicHub currentUser={authUser} />}
 
             {/* ======================================================== */}
             {/* HOME VIEW: EXACT RECREATION OF USER'S INSPIRATION DESIGN */}
